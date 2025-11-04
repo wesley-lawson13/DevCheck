@@ -1,22 +1,46 @@
-import { useEffect, useState } from "react";
-import "./index.css";
+import ProjectChecklist from "./pages/ProjectChecklist.jsx";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Home from "./pages/Home.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import ProtectedRoute from "./components/ProtectedRoutes.jsx";
+import Sidebar from "./components/Sidebar.jsx";
+
+function Logout() {
+  localStorage.clear()
+  return <Navigate to="/login" />
+}
+
+function RegisterAndLogout() {
+  localStorage.clear()
+  return <Register />
+}
 
 function App() {
-  const [message, setMessage] = useState("Loading...");
-
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/checklists/hello/")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage("Failed to load message"));
-  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
-      <h1 className="text-4xl font-bold text-indigo-600 mb-4">{message}</h1>
-      <p className="text-gray-500">Connected: Vite + React + Django + Tailwind v4 🚀</p>
-    </div>
-  );
+      <BrowserRouter>
+        
+        <Routes>
+          <Route element={<Sidebar />}>
+            <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+            />
+          </ Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/logout" element={<Logout />} />
+            <Route path="/register" element={<RegisterAndLogout />} />
+            <Route path="*" element={<NotFound />} />
+          
+        </Routes>
+      </BrowserRouter>
+  )
 }
 
 export default App;

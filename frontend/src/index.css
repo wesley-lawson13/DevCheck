@@ -1,13 +1,110 @@
 @import "tailwindcss";
 
+/* === Theme Colors === */
 @theme {
-  /* Custom theme variables can go here */
+  --color-dark: #3d3d3dff;
+  --color-green: #839788ff;
+  --color-beige: #eee0cbff;
+  --color-khaki: #baa898ff;
+  --color-blue: #bfd7eaff;
+
+  --color-muted: #ececf0;
+  --color-white: #ffffff;
+
+  --font-sans: "Inter", "Segoe UI", sans-serif;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
+/* === Base Layer === */
 @layer base {
-  /* Base styles */
+  body {
+    @apply bg-muted text-dark font-sans antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-semibold text-dark;
+  }
+
+  a {
+    @apply text-green hover:text-khaki transition-colors;
+  }
+
+  button {
+    @apply rounded-md focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2;
+  }
 }
 
+/* === Components Layer === */
+@layer components {
+  /* --- Page Layout --- */
+  .page-wrapper {
+    @apply flex flex-col bg-muted min-h-screen;
+  }
+
+  .page-header {
+    @apply flex justify-between items-center mb-6;
+  }
+
+  .page-section {
+    @apply bg-white rounded-lg shadow-sm border border-muted p-6;
+  }
+
+  /* --- Project Cards --- */
+  .project-grid {
+    @apply grid gap-6 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .project-card {
+    @apply bg-white rounded-lg border border-muted shadow-sm hover:shadow-md hover:border-khaki transition-all duration-200 flex flex-col;
+  }
+
+  .project-card-header {
+    @apply flex justify-between items-start mb-3;
+  }
+
+  .project-card-title {
+    @apply text-lg font-semibold text-dark;
+  }
+
+  .project-card-description {
+    @apply text-sm text-dark/70 flex-1;
+  }
+
+  .project-card-footer {
+    @apply mt-4 flex justify-between items-center text-xs text-dark/60;
+  }
+
+  .status-badge {
+    @apply inline-block px-2 py-1 text-xs font-medium rounded-md bg-blue text-dark/80;
+  }
+
+  /* --- Utility Wrappers --- */
+  .section {
+    @apply py-10 px-6;
+  }
+
+  .container {
+    @apply max-w-6xl mx-auto;
+  }
+}
+
+/* === Utilities Layer === */
 @layer utilities {
-  /* Custom utilities */
+  .text-muted {
+    color: var(--color-dark) / 0.6;
+  }
+
+  .bg-muted {
+    background-color: var(--color-muted);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .border-soft {
+    border-color: var(--color-muted);
+  }
 }
