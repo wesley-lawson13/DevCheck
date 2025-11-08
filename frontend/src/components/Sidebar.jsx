@@ -1,10 +1,14 @@
 import { Home, FolderKanban, Settings, LogOut, ChartColumnIncreasing } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useParams } from "react-router-dom";
 import Header from "./Header";
 import logo from '../assets/DevCheckLogo.png';
+import { useState, useEffect } from "react";
+import api from "../api";
 
 export default function Sidebar() {
   const location = useLocation();
+  const { projectId } = useParams()
+  const [title, setTitle] = useState("Dashboard")
 
   const navItems = [
     { name: "Dashboard", path: "/", icon: <Home className="w-5 h-5" /> },
@@ -12,6 +16,30 @@ export default function Sidebar() {
     { name: "Statistics", path: "/statistics", icon: <ChartColumnIncreasing className="w-5 h-5" /> },
     { name: "Settings", path: "/settings", icon: <Settings className="w-5 h-5" /> },
   ];
+
+  useEffect(() => {
+    // If we are on the dashboard/home route
+    if (location.pathname === "/") {
+      setTitle("Dashboard");
+    }
+
+    // If we are on a project detail route
+    else if (projectId) {
+      api.get(`/checklists/projects/${projectId}/detail/`)
+        .then(res => setTitle(res.data.name))
+        .catch(() => setTitle("Project"));
+    }
+
+    // You can extend this logic for other routes
+    else if (location.pathname.startsWith("/settings")) {
+      setTitle("Settings");
+    }
+
+    // Default fallback
+    else {
+      setTitle("DevCheck");
+    }
+  }, [location, projectId]);
 
   return (
     <div className="flex min-h-screen bg-muted text-white">
@@ -45,14 +73,17 @@ export default function Sidebar() {
           })}
         </nav>
 
-        <button className="flex items-center gap-3 mt-auto px-4 py-2 rounded-xl hover:bg-khaki/20 transition">
+        <Link 
+          className="flex items-center gap-3 mt-auto px-4 py-2 rounded-xl hover:bg-khaki/20 transition"
+          to="/logout"
+        >
           <LogOut className="w-5 h-5" />
           <span>Logout</span>
-        </button>
+        </Link>
       </aside>
 
         <main className="flex-1 bg-muted text-dark flex flex-col overflow-y-auto">
-            <Header title="Dashboard" />
+            <Header title={title} />
             <div className="p-6">
                 <Outlet />
             </div>

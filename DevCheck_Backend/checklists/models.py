@@ -33,7 +33,7 @@ class ChecklistSection(models.Model):
     ]
     page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="sections")
     title = models.CharField(max_length=20, choices=SECTION_CHOICES)
-    order = models.PositiveIntegerField(default=0)
+    order = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("page", "title")  # One section of each type per page

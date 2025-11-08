@@ -11,6 +11,11 @@
   --color-muted: #ececf0;
   --color-white: #ffffff;
 
+  --color-lgreen: #e9eceaff;
+  --color-lbeige: #f7f2e8ff;
+  --color-lkhaki: #f3ebe2ff;
+  --color-lblue: #e6f0f7ff;
+
   --font-sans: "Inter", "Segoe UI", sans-serif;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;

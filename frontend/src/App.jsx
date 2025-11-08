@@ -1,9 +1,10 @@
-import ProjectChecklist from "./pages/ProjectChecklist.jsx";
+import ProjectDetail from "./pages/ProjectDetail.jsx";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import NotFound from "./pages/NotFound.jsx";
+
 import ProtectedRoute from "./components/ProtectedRoutes.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 
@@ -25,18 +26,29 @@ function App() {
         <Routes>
           <Route element={<Sidebar />}>
             <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            }
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
             />
-          </ Route>
-            <Route path="/login" element={<Login />} />
-            <Route path="/logout" element={<Logout />} />
-            <Route path="/register" element={<RegisterAndLogout />} />
-            <Route path="*" element={<NotFound />} />
+
+            <Route 
+              path="/projects/:projectId" 
+              element={
+                <ProtectedRoute>
+                  <ProjectDetail />
+                </ProtectedRoute>
+              } 
+            />
+          </Route>
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/logout" element={<Logout />} />
+          <Route path="/register" element={<RegisterAndLogout />} />
+
+          <Route path="*" element={<NotFound />} />
           
         </Routes>
       </BrowserRouter>

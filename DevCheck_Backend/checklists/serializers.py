@@ -13,6 +13,21 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
+class ChecklistTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = '__all__'
+
+class ChecklistSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChecklistSection
+        fields = '__all__'
+
+class PageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Page
+        fields = '__all__'
+
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
@@ -21,17 +36,31 @@ class ProjectSerializer(serializers.ModelSerializer):
             'owner': {'read_only': True},
         }
 
-class PageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Page
-        fields = '__all__'
-
-class ChecklistSectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChecklistSection
-        fields = '__all__'
-
-class ChecklistTaskSerializer(serializers.ModelSerializer):
+class ChecklistTaskNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = ['id', 'title', 'completed']
+
+
+class ChecklistSectionNestedSerializer(serializers.ModelSerializer):
+    tasks = ChecklistTaskNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ChecklistSection
+        fields = ['id', 'title', 'tasks']
+
+
+class PageNestedSerializer(serializers.ModelSerializer):
+    sections = ChecklistSectionNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Page
+        fields = ['id', 'name', 'sections']
+
+
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    pages = PageNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'link', 'pages']
