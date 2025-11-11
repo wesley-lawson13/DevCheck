@@ -23,11 +23,18 @@ class ChecklistSectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChecklistSection
         fields = '__all__'
+        extra_kwargs = {
+            'page': {'read_only': True}
+        }
 
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page
         fields = '__all__'
+        extra_kwargs = {
+            'order': {'required': False},
+            'project': {'read_only': True} 
+        }
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:

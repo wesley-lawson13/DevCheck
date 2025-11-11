@@ -14,7 +14,6 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
-
 class Page(models.Model):
     """Each page belongs to a project and has its own checklists."""
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="pages")
