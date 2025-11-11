@@ -17,6 +17,7 @@ class ChecklistTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = '__all__'
+        read_only_fields = ['section']
 
 class ChecklistSectionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,4 +64,4 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'link', 'pages']
+        fields = ['id', 'name', 'description', 'link', 'pages', 'project_status']

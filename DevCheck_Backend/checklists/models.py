@@ -8,6 +8,7 @@ class Project(models.Model):
     description = models.TextField(blank=True)
     link = models.URLField(blank=True, null=True)
     image = models.ImageField(blank=True, null=True)
+    project_status = models.CharField(max_length=20, default="MVP")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

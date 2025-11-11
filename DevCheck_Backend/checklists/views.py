@@ -34,7 +34,7 @@ class ProjectDelete(generics.DestroyAPIView):
         user = self.request.user
         return Project.objects.filter(owner=user)
 
-class ProjectDetailView(generics.RetrieveAPIView):
+class ProjectDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = ProjectDetailSerializer
     permission_classes = [IsAuthenticated]
 
