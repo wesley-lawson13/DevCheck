@@ -12,6 +12,11 @@ export default function ProjectDetail() {
   const [projectStatus, setProjectStatus] = useState(null);
   const [creatingNewPage, setCreatingNewPage] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState(null);
+  const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
+  const [statusToSet, setStatusToSet] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // returns full project tree w/ associated pages, sections, tasks, etc.
   const getProject = async () => {
@@ -180,6 +185,22 @@ export default function ProjectDetail() {
     }
   };
 
+  const deletePage = async (pageId) => {
+    try {
+      const res = await api.delete(`checklists/pages/${pageId}/`);
+      setPages((prev) => prev.filter((p) => p.id !== pageId));
+      setShowDeleteModal(false);
+
+      if (res.status === 200 || res.status === 201) {
+        setSuccessMessage("Page deleted successfully."); // currently not working
+        await getProject();
+      }
+    } catch (err) {
+      console.error("Failed to delete page:", err);
+      alert("Failed to delete page.");
+    }
+  };
+
   const handleAddClick = (pageId, sectionTitle, sectionId) => {
     const key = `${sectionId || `${pageId}-${sectionTitle}`}`;
     console.log('Opening add form with key:', key);
@@ -229,6 +250,24 @@ export default function ProjectDetail() {
     setNewPageTitle("");
   };
 
+  const updateStatus = async (newStatus) => {
+    try {
+      const res = await api.patch(`/checklists/projects/${projectId}/detail/`, {
+        project_status: newStatus
+      });
+
+      if (res.status === 200 || res.status === 201) {
+        setProjectStatus(newStatus);
+        setSuccessMessage(`Project status updated to "${newStatus}" successfully.`);
+        await getProject();
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert("Failed to update status.");
+    }
+  };
+
+
   useEffect(() => {
     getProject();
   }, [projectId]);
@@ -246,392 +285,513 @@ export default function ProjectDetail() {
   if (!project) return <p>Loading...</p>; 
 
   return (
-    <div className="min-h-screen p-8">
+    <div>
 
-      {/* Status Bar */}
-      <div className="max-w-5xl mx-auto mb-10">
-        <h1 className="text-3xl font-bold mb-4 text-dark">
-          Project Checklist
-        </h1>
+      {/* Success message for deleted page and updated status */}
+      {successMessage && (
+        <div className="flex justify-between w-full bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-5">
+          {successMessage}
+          <button className="text-muted" 
+            onClick={() => setSuccessMessage("")}
+          >
+            &times;
+            </button>
+        </div>
+      )}
 
-        <div className="flex items-center justify-between bg-white shadow rounded-xl p-4">
-          <span className="text-gray-600 font-medium">Project Status:</span>
-          <div className="flex gap-3">
-            {["MVP", "In Development", "In Deployment"].map((status) => (
-              <button
-                key={status}
-                onClick={async () => {
-                  try {
-                    setProjectStatus(status); // Optimistic UI update
-                    await api.patch(`/checklists/projects/${projectId}/detail/`, {
-                      project_status: status,
-                    });
-                  } catch (err) {
-                    console.error("Failed to update project status:", err);
-                    alert("Could not update status");
-                    getProject(); // revert on failure
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  projectStatus === status
-                    ? `${statusColors[status]} text-white shadow-md`
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                {status}
-              </button>
-            ))}
+      <div className={`min-h-screen p-4 transition-all duration-200 ${
+        showDeleteModal || showUpdateStatusModal ? "blur-sm pointer-events-none" : ""
+        }`}
+      >
+
+
+        {/* Status Bar */}
+        <div className="max-w-5xl mx-auto mb-10">
+          <h1 className="text-3xl font-bold mb-2 text-dark">
+            To Do: {project.name}
+          </h1>
+          
+          {(project.description !== null
+            ) && (
+              <div className="flex justify-start items-center mb-2 gap-2">
+                <h4 className="text-lg font-bold text-dark">Description:</h4>
+                <span className="text-md font-light">{project.description}</span>
+              </div>
+            )
+          }
+
+          {(project.link !== null 
+            ) && (
+              <div className="flex justify-start items-center mb-4 gap-2">
+                <h4 className="text-md font-semibold text-dark">Link:</h4>
+                <a className="text-md font-bold text-dblue" href={project.link}>{project.link}</a>
+              </div>
+            )
+          }
+
+          <div className="flex items-center justify-between bg-white shadow rounded-xl p-4">
+            <span className="text-gray-600 font-medium">{project.name}'s Status:</span>
+            <div className="flex gap-3">
+              {["MVP", "In Development", "In Deployment"].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => {
+                    if (project.status !== status) {
+                      setStatusToSet(status);
+                      setShowUpdateStatusModal(true);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    projectStatus === status
+                      ? `${statusColors[status]} text-white shadow-md`
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
 
-      {/* Page Checklists */}
-      <div className="max-w-5xl mx-auto space-y-8">
-        {pages.map((page) => (
-          <div
-            key={page.id}
-            className="bg-white rounded-2xl shadow p-6 transition hover:shadow-lg"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold text-dark">
-                {page.name}
-              </h2>
-              <button className="text-dark font-bold">
-                <FaRegTrashCan size={25} />
-              </button>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
+        {(pages.length == 0 && !creatingNewPage) &&
+          <i className="flex text-dark font-semibold justify-center mb-10">
+            No pages yet. Click 'Add New Page' to start your checklist!
+          </i>
+        }
+        {/* Page Checklists */}
+        <div className="max-w-5xl mx-auto space-y-8">
+          {pages.map((page) => (
+            <div
+              key={page.id}
+              className="bg-white rounded-2xl shadow p-6 transition hover:shadow-lg"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold text-dark">
+                  {page.name}
+                </h2>
+                <button
+                  className="text-dark font-bold"
+                  onClick={() => {
+                    setPageToDelete(page.id);
+                    setShowDeleteModal(true);
+                  }}
+                >
+                  <FaRegTrashCan size={25} />
+                </button>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
 
-              {/* MVP Section */}
-              <div className="p-4 border-l-4 border-green bg-lgreen rounded-lg">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg font-semibold text-dark">MVP</h3>
-                  <button 
-                    className="rounded-xl bg-green text-sm text-white p-2"
-                    onClick={() => {
+                {/* MVP Section */}
+                <div className="p-4 border-l-4 border-green bg-lgreen rounded-lg">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-lg font-semibold text-dark">MVP</h3>
+                    <button 
+                      className="rounded-xl bg-green text-sm text-white p-2"
+                      onClick={() => {
+                        const section = page.sections?.find(s => s.title === 'MVP');
+                        handleAddClick(page.id, 'MVP', section?.id);
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  <ul className="space-y-1 text-sm text-gray-700">
+                    {page.sections
+                      ?.filter(section => section.title === 'MVP')
+                      .flatMap((section) => 
+                        (section.tasks || []).map((task) => (
+                          <li key={task.id} className="flex justify-between">
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                className="accent-green"
+                                checked={task.completed}
+                                onChange={() => toggleTask(task.id, task.completed)}
+                              />
+                              <span>{task.title}</span>
+                            </div>
+                                                      
+                            <button
+                              className="text-green font-thin"
+                              onClick={() => deleteTask(task.id)}
+                            >
+                              <FaRegTrashCan size={15}/>
+                            </button>
+                          </li>
+                        ))
+                      )}
+                      {(
+                        !page.sections ||
+                        page.sections.length === 0 ||
+                        !page.sections.some(
+                          (s) => 
+                            s.title === 'MVP' && 
+                            ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
+                        )                   
+                      ) && (
+                        <li className="text-gray-400 italic">No MVP tasks</li>
+                      )}
+                    {(() => {
                       const section = page.sections?.find(s => s.title === 'MVP');
-                      handleAddClick(page.id, 'MVP', section?.id);
-                    }}
-                  >
-                    + Add
-                  </button>
-                </div>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  {page.sections
-                    ?.filter(section => section.title === 'MVP')
-                    .flatMap((section) => 
-                      (section.tasks || []).map((task) => (
-                        <li key={task.id} className="flex justify-between">
-                          <div className="flex items-center gap-2">
-                            <input 
-                              type="checkbox" 
-                              className="accent-green"
-                              checked={task.completed}
-                              onChange={() => toggleTask(task.id, task.completed)}
-                            />
-                            <span>{task.title}</span>
-                          </div>
-                                                    
+                      const key = section?.id || `${page.id}-MVP`;
+                      return addingTask[key] && (
+                        <li className="flex items-center gap-2 mt-2">
+                          <input 
+                            type="checkbox" 
+                            className="accent-green"
+                            disabled
+                          />
+                          <input
+                            type="text"
+                            className="flex-1 px-2 py-1 border border-green rounded"
+                            placeholder="New task..."
+                            value={newTaskTitle[key] || ''}
+                            onChange={(e) => setNewTaskTitle(prev => ({ 
+                              ...prev, 
+                              [key]: e.target.value 
+                            }))}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSubmitTask(page.id, 'MVP', section?.id);
+                              }
+                            }}
+                            autoFocus
+                          />
                           <button
-                            className="text-green font-thin"
-                            onClick={() => deleteTask(task.id)}
+                            className="text-green font-bold"
+                            onClick={() => handleSubmitTask(page.id, 'MVP', section?.id)}
                           >
-                            <FaRegTrashCan size={15}/>
+                            ✓
+                          </button>
+                          <button
+                            className="text-red-500 font-bold"
+                            onClick={() => handleCancelAdd(page.id, 'MVP', section?.id)}
+                          >
+                            ✕
                           </button>
                         </li>
-                      ))
-                    )}
+                      );
+                    })()}
+                  </ul>
+                </div>
+
+                {/* In Development Section */}
+                <div className="p-4 border-l-4 border-beige bg-lbeige rounded-lg">
+                  <div className="flex justify-between mb-3 items-center">
+                    <h3 className="text-lg font-semibold text-dark">In Development</h3>
+                    <button 
+                      className="rounded-xl bg-khaki text-sm text-white p-2"
+                      onClick={() => {
+                        const section = page.sections?.find(s => s.title === 'DEV');
+                        handleAddClick(page.id, 'DEV', section?.id);
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  <ul className="space-y-1 text-sm text-gray-700">
+                    {page.sections
+                      ?.filter(section => section.title === 'DEV')
+                      .flatMap((section) => 
+                        (section.tasks || []).map((task) => (
+                          <li key={task.id} className="flex justify-between">
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                className="accent-khaki"
+                                checked={task.completed}
+                                onChange={() => toggleTask(task.id, task.completed)}
+                              />
+                              <span>{task.title}</span>
+                            </div>
+                            
+                            <button
+                              className="text-khaki font-thin"
+                              onClick={() => deleteTask(task.id)}
+                            >
+                              <FaRegTrashCan size={15}/>
+                            </button>
+                          </li>
+                        ))
+                      )}
                     {(
                       !page.sections ||
                       page.sections.length === 0 ||
                       !page.sections.some(
                         (s) => 
-                          s.title === 'MVP' && 
+                          s.title === 'DEV' && 
+                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
+                      )                   
+                    ) && (
+                      <li className="text-gray-400 italic">No development tasks</li>
+                    )}
+                    {(() => {
+                      const section = page.sections?.find(s => s.title === 'DEV');
+                      const key = section?.id || `${page.id}-DEV`;
+                      return addingTask[key] && (
+                        <li className="flex items-center gap-2 mt-2">
+                          <input 
+                            type="checkbox" 
+                            className="accent-khaki"
+                            disabled
+                          />
+                          <input
+                            type="text"
+                            className="flex-1 px-2 py-1 border border-beige rounded"
+                            placeholder="New task..."
+                            value={newTaskTitle[key] || ''}
+                            onChange={(e) => setNewTaskTitle(prev => ({ 
+                              ...prev, 
+                              [key]: e.target.value 
+                            }))}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSubmitTask(page.id, 'DEV', section?.id);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            className="text-khaki font-bold"
+                            onClick={() => handleSubmitTask(page.id, 'DEV', section?.id)}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            className="text-red-500 font-bold"
+                            onClick={() => handleCancelAdd(page.id, 'DEV', section?.id)}
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      );
+                    })()}
+                  </ul>
+                </div>
+
+                {/* In Deployment Section */}
+                <div className="p-4 border-l-4 border-blue bg-lblue rounded-lg">
+                  <div className="flex justify-between mb-3 items-center">
+                    <h3 className="text-lg font-semibold text-dark">In Deployment</h3>
+                    <button 
+                      className="rounded-xl bg-dblue text-sm text-white p-2"
+                      onClick={() => {
+                        const section = page.sections?.find(s => s.title === 'DEPLOY');
+                        handleAddClick(page.id, 'DEPLOY', section?.id);
+                      }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                  <ul className="space-y-1 text-sm text-gray-700">
+                    {page.sections
+                      ?.filter(section => section.title === 'DEPLOY')
+                      .flatMap((section) => 
+                        (section.tasks || []).map((task) => (
+                          <li key={task.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="checkbox" 
+                                className="accent-blue"
+                                checked={task.completed}
+                                onChange={() => toggleTask(task.id, task.completed)}
+                              />
+                              <span>{task.title}</span>
+                            </div> 
+                            <button
+                              className="text-dblue font-thin"
+                              onClick={() => deleteTask(task.id)}
+                            >
+                              <FaRegTrashCan size={15}/>
+                            </button>
+                          </li>
+                        ))
+                      )}
+                    {(
+                      !page.sections ||
+                      page.sections.length === 0 ||
+                      !page.sections.some(
+                        (s) => 
+                          s.title === 'DEPLOY' && 
                           ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
                       )                   
                     ) && (
                       <li className="text-gray-400 italic">No deployment tasks</li>
                     )}
-                  {(() => {
-                    const section = page.sections?.find(s => s.title === 'MVP');
-                    const key = section?.id || `${page.id}-MVP`;
-                    return addingTask[key] && (
-                      <li className="flex items-center gap-2 mt-2">
-                        <input 
-                          type="checkbox" 
-                          className="accent-green"
-                          disabled
-                        />
-                        <input
-                          type="text"
-                          className="flex-1 px-2 py-1 border border-green rounded"
-                          placeholder="New task..."
-                          value={newTaskTitle[key] || ''}
-                          onChange={(e) => setNewTaskTitle(prev => ({ 
-                            ...prev, 
-                            [key]: e.target.value 
-                          }))}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleSubmitTask(page.id, 'MVP', section?.id);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          className="text-green font-bold"
-                          onClick={() => handleSubmitTask(page.id, 'MVP', section?.id)}
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="text-red-500 font-bold"
-                          onClick={() => handleCancelAdd(page.id, 'MVP', section?.id)}
-                        >
-                          ✕
-                        </button>
-                      </li>
-                    );
-                  })()}
-                </ul>
-              </div>
-
-              {/* In Development Section */}
-              <div className="p-4 border-l-4 border-beige bg-lbeige rounded-lg">
-                <div className="flex justify-between mb-3 items-center">
-                  <h3 className="text-lg font-semibold text-dark">In Development</h3>
-                  <button 
-                    className="rounded-xl bg-khaki text-sm text-white p-2"
-                    onClick={() => {
-                      const section = page.sections?.find(s => s.title === 'DEV');
-                      handleAddClick(page.id, 'DEV', section?.id);
-                    }}
-                  >
-                    + Add
-                  </button>
-                </div>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  {page.sections
-                    ?.filter(section => section.title === 'DEV')
-                    .flatMap((section) => 
-                      (section.tasks || []).map((task) => (
-                        <li key={task.id} className="flex justify-between">
-                          <div className="flex items-center gap-2">
-                            <input 
-                              type="checkbox" 
-                              className="accent-khaki"
-                              checked={task.completed}
-                              onChange={() => toggleTask(task.id, task.completed)}
-                            />
-                            <span>{task.title}</span>
-                          </div>
-                          
-                          <button
-                            className="text-khaki font-thin"
-                            onClick={() => deleteTask(task.id)}
-                          >
-                            <FaRegTrashCan size={15}/>
-                          </button>
-                        </li>
-                      ))
-                    )}
-                  {(
-                    !page.sections ||
-                    page.sections.length === 0 ||
-                    !page.sections.some(
-                      (s) => 
-                        s.title === 'DEV' && 
-                        ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
-                    )                   
-                  ) && (
-                    <li className="text-gray-400 italic">No deployment tasks</li>
-                  )}
-                  {(() => {
-                    const section = page.sections?.find(s => s.title === 'DEV');
-                    const key = section?.id || `${page.id}-DEV`;
-                    return addingTask[key] && (
-                      <li className="flex items-center gap-2 mt-2">
-                        <input 
-                          type="checkbox" 
-                          className="accent-khaki"
-                          disabled
-                        />
-                        <input
-                          type="text"
-                          className="flex-1 px-2 py-1 border border-beige rounded"
-                          placeholder="New task..."
-                          value={newTaskTitle[key] || ''}
-                          onChange={(e) => setNewTaskTitle(prev => ({ 
-                            ...prev, 
-                            [key]: e.target.value 
-                          }))}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleSubmitTask(page.id, 'DEV', section?.id);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          className="text-khaki font-bold"
-                          onClick={() => handleSubmitTask(page.id, 'DEV', section?.id)}
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="text-red-500 font-bold"
-                          onClick={() => handleCancelAdd(page.id, 'DEV', section?.id)}
-                        >
-                          ✕
-                        </button>
-                      </li>
-                    );
-                  })()}
-                </ul>
-              </div>
-
-              {/* In Deployment Section */}
-              <div className="p-4 border-l-4 border-blue bg-lblue rounded-lg">
-                <div className="flex justify-between mb-3 items-center">
-                  <h3 className="text-lg font-semibold text-dark">In Deployment</h3>
-                  <button 
-                    className="rounded-xl bg-dblue text-sm text-white p-2"
-                    onClick={() => {
+                    {(() => {
                       const section = page.sections?.find(s => s.title === 'DEPLOY');
-                      handleAddClick(page.id, 'DEPLOY', section?.id);
-                    }}
-                  >
-                    + Add
-                  </button>
-                </div>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  {page.sections
-                    ?.filter(section => section.title === 'DEPLOY')
-                    .flatMap((section) => 
-                      (section.tasks || []).map((task) => (
-                        <li key={task.id} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <input 
-                              type="checkbox" 
-                              className="accent-blue"
-                              checked={task.completed}
-                              onChange={() => toggleTask(task.id, task.completed)}
-                            />
-                            <span>{task.title}</span>
-                          </div> 
+                      const key = section?.id || `${page.id}-DEPLOY`;
+                      return addingTask[key] && (
+                        <li className="flex items-center gap-2 mt-2">
+                          <input 
+                            type="checkbox" 
+                            className="accent-blue"
+                            disabled
+                          />
+                          <input
+                            type="text"
+                            className="flex-1 px-2 py-1 border border-blue rounded"
+                            placeholder="New task..."
+                            value={newTaskTitle[key] || ''}
+                            onChange={(e) => setNewTaskTitle(prev => ({ 
+                              ...prev, 
+                              [key]: e.target.value 
+                            }))}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSubmitTask(page.id, 'DEPLOY', section?.id);
+                              }
+                            }}
+                            autoFocus
+                          />
                           <button
-                            className="text-dblue font-thin"
-                            onClick={() => deleteTask(task.id)}
+                            className="text-dblue font-bold"
+                            onClick={() => handleSubmitTask(page.id, 'DEPLOY', section?.id)}
                           >
-                            <FaRegTrashCan size={15}/>
+                            ✓
+                          </button>
+                          <button
+                            className="text-red-500 font-bold"
+                            onClick={() => handleCancelAdd(page.id, 'DEPLOY', section?.id)}
+                          >
+                            ✕
                           </button>
                         </li>
-                      ))
-                    )}
-                  {(
-                    !page.sections ||
-                    page.sections.length === 0 ||
-                    !page.sections.some(
-                      (s) => 
-                        s.title === 'DEPLOY' && 
-                        ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
-                    )                   
-                  ) && (
-                    <li className="text-gray-400 italic">No deployment tasks</li>
-                  )}
-                  {(() => {
-                    const section = page.sections?.find(s => s.title === 'DEPLOY');
-                    const key = section?.id || `${page.id}-DEPLOY`;
-                    return addingTask[key] && (
-                      <li className="flex items-center gap-2 mt-2">
-                        <input 
-                          type="checkbox" 
-                          className="accent-blue"
-                          disabled
-                        />
-                        <input
-                          type="text"
-                          className="flex-1 px-2 py-1 border border-blue rounded"
-                          placeholder="New task..."
-                          value={newTaskTitle[key] || ''}
-                          onChange={(e) => setNewTaskTitle(prev => ({ 
-                            ...prev, 
-                            [key]: e.target.value 
-                          }))}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleSubmitTask(page.id, 'DEPLOY', section?.id);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          className="text-dblue font-bold"
-                          onClick={() => handleSubmitTask(page.id, 'DEPLOY', section?.id)}
-                        >
-                          ✓
-                        </button>
-                        <button
-                          className="text-red-500 font-bold"
-                          onClick={() => handleCancelAdd(page.id, 'DEPLOY', section?.id)}
-                        >
-                          ✕
-                        </button>
-                      </li>
-                    );
-                  })()}
-                </ul>
+                      );
+                    })()}
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {/* New Page Creation Form (Inline) */}
-        {creatingNewPage && (
-          <div className="bg-white rounded-2xl shadow p-6 border-2 border-dashed border-gray-300">
-            <div className="flex items-center gap-4 mb-4">
-              <input
-                type="text"
-                className="flex-1 text-2xl font-semibold text-dark border-b-2 border-dark focus:outline-none focus:border-blue-500 px-2 py-1"
-                placeholder="Enter page name..."
-                value={newPageTitle}
-                onChange={(e) => setNewPageTitle(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleNewPageSubmit();
-                  }
-                }}
-                autoFocus
-              />
+          {/* New Page Creation Form */}
+          {creatingNewPage && (
+            <div className="bg-white rounded-2xl shadow p-6 border-2 border-dashed border-gray-300">
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  className="flex-1 text-2xl font-semibold text-dark border-b-2 border-dark focus:outline-none focus:border-blue-500 px-2 py-1"
+                  placeholder="Enter page name..."
+                  value={newPageTitle}
+                  onChange={(e) => setNewPageTitle(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleNewPageSubmit();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  className="bg-green text-white font-semibold px-6 py-2 rounded-lg hover:bg-dark transition"
+                  onClick={handleNewPageSubmit}
+                >
+                  Create Page
+                </button>
+                <button
+                  className="bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+                  onClick={handleNewPageCancel}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-            <div className="flex gap-3 justify-end">
+          )}
+
+          {/* Add New Page Button */}
+          <div className="text-center mt-10">
+            <button
+              className="bg-dark text-white font-bold px-6 py-3 rounded-full font-semibold shadow hover:shadow-lg hover:scale-105 transition-transform"
+              onClick={() => setCreatingNewPage(true)}
+            >
+              + Add New Page
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="p-6 bg-dark rounded-xl shadow-2xl w-80 border border-gray-200">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Delete Page?
+            </h2>
+
+            <p className="text-green mb-6">
+              Are you sure you want to delete this page? This action cannot be undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
               <button
-                className="bg-green text-white font-semibold px-6 py-2 rounded-lg hover:bg-dark transition"
-                onClick={handleNewPageSubmit}
-              >
-                Create Page
-              </button>
-              <button
-                className="bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-400 transition"
-                onClick={handleNewPageCancel}
+                className="px-4 py-2 bg-white text-dark font-semibold rounded-lg hover:bg-muted"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setPageToDelete(null);
+                }}
               >
                 Cancel
               </button>
+
+              <button
+                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-800"
+                onClick={async () => {
+                  await deletePage(pageToDelete);
+                  setShowDeleteModal(false);
+                  setPageToDelete(null);
+                }}
+              >
+                Delete
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Add New Page Button */}
-        <div className="text-center mt-10">
-          <button
-            className="bg-dark text-white font-bold px-6 py-3 rounded-full font-semibold shadow hover:shadow-lg hover:scale-105 transition-transform"
-            onClick={() => setCreatingNewPage(true)}
-          >
-            + Add New Page
-          </button>
         </div>
-      </div>
+      )}
+
+      {/* Status Modal */}
+      {showUpdateStatusModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-30">
+          <div className="p-6 bg-dark rounded-xl shadow-2xl w-80 border border-gray-200">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Update Status
+            </h2>
+
+            <p className="text-green mb-6">
+              Switch project status to <strong className="text-green">{statusToSet}</strong>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 bg-white text-dark font-semibold rounded-lg hover:bg-muted"
+                onClick={() => {
+                  setShowUpdateStatusModal(false);
+                  setStatusToSet(null);
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="px-4 py-2 bg-green text-white font-semibold rounded-lg hover:bg-khaki"
+                onClick={async () => {
+                  await updateStatus(statusToSet);
+                  setShowUpdateStatusModal(false);
+                  setStatusToSet(null);
+                }}
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
+    
+    
   );
 }

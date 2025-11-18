@@ -11,6 +11,14 @@ class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
+
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
 # will list all projects and allow the creation of new projects
 class ProjectListCreate(generics.ListCreateAPIView):
     serializer_class = ProjectSerializer

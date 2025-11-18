@@ -1,9 +1,11 @@
-import { Home, FolderKanban, Settings, LogOut, ChartColumnIncreasing } from "lucide-react";
+import { Home, FolderKanban, LogOut, ChartColumnIncreasing } from "lucide-react";
+import { CgProfile } from "react-icons/cg";
 import { Link, Outlet, useLocation, useParams } from "react-router-dom";
 import Header from "./Header";
 import logo from '../assets/DevCheckLogo.png';
 import { useState, useEffect } from "react";
 import api from "../api";
+import Footer from "./Footer";
 
 export default function Sidebar() {
   const location = useLocation();
@@ -12,9 +14,9 @@ export default function Sidebar() {
 
   const navItems = [
     { name: "Dashboard", path: "/", icon: <Home className="w-5 h-5" /> },
-    { name: "Projects", path: "/projects", icon: <FolderKanban className="w-5 h-5" /> },
-    { name: "Statistics", path: "/statistics", icon: <ChartColumnIncreasing className="w-5 h-5" /> },
-    { name: "Settings", path: "/settings", icon: <Settings className="w-5 h-5" /> },
+    { name: "Projects", path: "#projects", icon: <FolderKanban className="w-5 h-5" /> },
+    { name: "Advanced Statistics", path: "#statistics", icon: <ChartColumnIncreasing className="w-5 h-5" /> },
+    { name: "Profile", path: "#profile", icon: <CgProfile className="w-5 h-5" /> },
   ];
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export default function Sidebar() {
             <div className="p-6">
                 <Outlet />
             </div>
+            <Footer />
         </main>
     </div>
   );

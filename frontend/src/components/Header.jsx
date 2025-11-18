@@ -1,16 +1,35 @@
-import { Search } from "lucide-react";
+import {Link, useParams } from "react-router-dom";
+import { IoCreateOutline } from "react-icons/io5";
 
 export default function Header({ title }) {
+  const { projectId } = useParams();
+
+  const isProjectPage = Boolean(projectId);
+
   return (
     <header className="flex items-center justify-between bg-white px-6 py-3 border-b border-khaki/30">
       {/* Left: Page Title */}
       <h1 className="text-xl font-semibold text-dark">{title}</h1>
 
       <div className="flex items-center gap-4">
-        {/* Profile button */}
-        <button className="w-10 h-10 rounded-full bg-khaki flex items-center justify-center text-white font-semibold">
-          <span>WL</span> {/* replace with initials or profile image */}
-        </button>
+        {isProjectPage ? (
+          <Link 
+            to={`projects/${projectId}/edit`}
+            className="flex gap-2 px-4 py-2 text-md font-bold bg-khaki/80 text-white rounded-lg hover:bg-khaki hover:shadow-lg transition"
+          >
+            <IoCreateOutline size={25} />
+            <span className="pt-1">Edit Project</span> 
+          </Link>
+        ) : (
+          <Link 
+            to={`dashboard/create-project`}
+            className="flex gap-2 items-end px-4 py-2 text-md font-bold bg-khaki/80 text-white rounded-lg hover:bg-khaki hover:shadow-lg transition"
+          >
+            <IoCreateOutline size={25} />
+            <span className="pt-1">Create Project </span>
+          </Link>
+        )
+        } 
       </div>
     </header>
   );
