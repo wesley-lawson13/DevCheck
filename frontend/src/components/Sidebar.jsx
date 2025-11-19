@@ -14,8 +14,10 @@ export default function Sidebar() {
 
   const navItems = [
     { name: "Dashboard", path: "/", icon: <Home className="w-5 h-5" /> },
-    { name: "Projects", path: "#projects", icon: <FolderKanban className="w-5 h-5" /> },
-    { name: "Advanced Statistics", path: "#statistics", icon: <ChartColumnIncreasing className="w-5 h-5" /> },
+
+    //* Extend after MVP stage
+    //{ name: "Projects", path: "#projects", icon: <FolderKanban className="w-5 h-5" /> },
+    //{ name: "User Statistics", path: "#statistics", icon: <ChartColumnIncreasing className="w-5 h-5" /> },
     { name: "Profile", path: "#profile", icon: <CgProfile className="w-5 h-5" /> },
   ];
 

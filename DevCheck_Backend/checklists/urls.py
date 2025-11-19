@@ -18,5 +18,5 @@ urlpatterns = [
 
     # TASKS
     path('projects/<int:section_id>/tasks/', views.TaskListCreate.as_view(), name='task-list-create'),
-    path('tasks/<int:pk>/', views.TaskDetail.as_view(), name='task-detail')
+    path('tasks/<int:pk>/', views.TaskDetail.as_view(), name='task-detail'),
 ]

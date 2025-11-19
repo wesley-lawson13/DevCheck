@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.shortcuts import render
 from django.contrib.auth.models import User
 
@@ -48,6 +49,13 @@ class ProjectDetailView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(owner=self.request.user).prefetch_related('pages__sections__tasks')
+
+    def get_object(self):
+        project = super().get_object()
+        if self.request.method == "GET" and not self.request.query_params.get('dashboard'):
+            project.updated_at = timezone.now()
+            project.save(update_fields=['updated_at'])
+        return project
 
 class PageListCreate(generics.ListCreateAPIView):
     serializer_class = PageSerializer
