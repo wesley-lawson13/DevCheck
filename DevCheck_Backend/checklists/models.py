@@ -1,11 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class Issue(models.Model):
+    """A issue form for superusers to check suggestions / live issues in development"""
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="complaints")
+    description = models.TextField()
+    date_submitted = models.DateTimeField(auto_now_add=True)
+
 class Project(models.Model):
     """A project groups related website pages together."""
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects")
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    description = models.TextField()
     link = models.URLField(blank=True, null=True)
     image = models.ImageField(blank=True, null=True, upload_to='projects/', default='defaults/copyLogo.png')
     project_status = models.CharField(max_length=20, default="MVP")

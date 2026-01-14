@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Project, Page, ChecklistSection, Task
+from .models import Project, Page, ChecklistSection, Task, Issue
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'password'] # fields to be serialized on input / return 
+        fields = ['id', 'username', 'password', 'date_joined'] # fields to be serialized on input / return 
         extra_kwargs = {"password": {"write_only": True}} # don't return password on GET requests
 
     def create(self, validated_data):
@@ -72,3 +72,9 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'link', 'pages', 'project_status']
+
+class IssueSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source="user.id")
+    class Meta:
+        model = Issue
+        fields = ['description', 'user', 'date_submitted']

@@ -22,7 +22,7 @@ export default function Header({ title }) {
           </Link>
         ) : (
           <Link 
-            to={`dashboard/create-project`}
+            to={`create-project`}
             className="flex gap-2 items-end px-4 py-2 text-md font-bold bg-khaki/80 text-white rounded-lg hover:bg-khaki hover:shadow-lg transition"
           >
             <IoCreateOutline size={25} />

@@ -5,13 +5,12 @@ from django.contrib.auth.models import User
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import * 
-from .models import Project, Page, ChecklistSection, Task
+from .models import Project, Page, ChecklistSection, Task, Issue
 
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
-
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
@@ -30,10 +29,7 @@ class ProjectListCreate(generics.ListCreateAPIView):
         return Project.objects.filter(owner=user)
 
     def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(owner=self.request.user)
-        else:
-            print(serializer.errors)
+        serializer.save(owner=self.request.user)
 
 class ProjectDelete(generics.DestroyAPIView):
     serializer_class = ProjectSerializer
@@ -116,3 +112,11 @@ class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(section__page__project__owner=self.request.user)
+
+class CreateIssueView(generics.CreateAPIView):
+    queryset = Issue.objects.all()
+    serializer_class = IssueSerializer 
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
