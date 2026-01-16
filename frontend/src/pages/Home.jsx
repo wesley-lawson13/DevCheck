@@ -33,13 +33,16 @@ function Home() {
     if (!location.hash) return;
 
     const id = location.hash.replace("#", "");
-    const el = document.getElementById(id);
 
-    if (el) {
-      setTimeout(() => {
-        el.scrollIntoView({ behavior: "smooth" });
-      }, 0);
-    }
+    // Double RAF ensures layout is complete
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
   }, [location.hash]);
 
   const fetchUser = async () => {
@@ -282,10 +285,20 @@ function Home() {
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">Your Projects:</h1>
+      {/* Projects Section - Wrap everything in section tag */}
+      <section id="projects" className="mb-8">
+        <h1 className="text-2xl font-bold mb-6">Your Projects:</h1>
 
-      <section id="projects">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-4">
+          {allProjects.length === 0 && (
+            <span className="font-light italic text-md text-dark">
+              No projects yet.{" "}
+              <a href="/create-project" className="text-khaki font-semibold">
+                Create Your First Project
+              </a>
+              .
+            </span>
+          )}
           {!showAllProjects
             ? recentProjects.map((project, key) => (
                 <Link
@@ -405,20 +418,10 @@ function Home() {
         </div>
       </section>
 
-      {/* Extend after MVP is deployed.
-
-        <hr className="text-dark/20 mb-5"/>
-
-        <div id="statistics">
-            <h2 className="text-dark text-2xl font-bold mb-6">User Statistics:</h2>
-            <p className="text-dark">Do this!</p>
-        </ div>
-        
-        */}
-
       <hr className="text-dark/20 mb-5" />
 
-      <section id="profile">
+      {/* Profile Section - Wrap everything in section tag */}
+      <section id="profile" className="mb-8">
         <div className="flex m-2 justify-start gap-x-4 mb-6 items-center">
           <h2 className="text-dark text-2xl font-bold">Profile:</h2>
           <span className="text-dark text-md font-light">
@@ -440,14 +443,6 @@ function Home() {
                 <span className="font-semibold">{formattedDateJoined}</span>.
               </span>
             </div>
-
-            {/* Functionality for after the MVP is deployed.
-
-                <button className="bg-red-600 rounded-xl hover:bg-dark hover:scale-101 text-white text-center p-3">
-                    Delete Account
-                </button>
-
-            */}
           </div>
 
           {/* Right column */}
@@ -456,7 +451,7 @@ function Home() {
               <h5 className="text-dark font-bold text-lg">Project Status:</h5>
               <div className="text-center m-1">
                 {projects.length == 0 && (
-                  <span className="text-dark font-italic text-lg">
+                  <span className="text-dark font-light italic text-lg">
                     No projects created yet.
                   </span>
                 )}
@@ -513,7 +508,8 @@ function Home() {
 
       <hr className="text-dark/20 mb-5" />
 
-      <section id="report">
+      {/* Report Section - Wrap everything in section tag */}
+      <section id="report" className="mb-8">
         <form onSubmit={handleSubmit}>
           <div className="flex m-2 justify-center items-center">
             <h2 className="text-dark font-bold text-2xl overflow-hidden">

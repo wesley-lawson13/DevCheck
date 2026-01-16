@@ -333,7 +333,7 @@ export default function ProjectDetail() {
             </div>
           )}
 
-          {project.link !== null && (
+          {project.link && (
             <div className="flex justify-start items-center mb-4 gap-2">
               <h4 className="text-md font-semibold text-dark">Link:</h4>
               <a className="text-md font-bold text-dblue" href={project.link}>

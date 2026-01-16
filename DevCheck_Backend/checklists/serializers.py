@@ -71,7 +71,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'link', 'pages', 'project_status']
+        fields = ['id', 'name', 'description', 'link', 'pages', 'project_status', 'image']
 
 class IssueSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.id")

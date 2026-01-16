@@ -104,6 +104,33 @@ export default function Sidebar() {
     return () => observer.disconnect();
   }, []);
 
+  // Scroll to hash section when navigating from different page
+  useEffect(() => {
+    if (!location.hash || location.pathname !== "/dashboard") return;
+
+    const id = location.hash.replace("#", "");
+
+    const scrollToSection = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        // Scroll the main container, not the window
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        console.log(`Element with id "${id}" not found`);
+      }
+    };
+
+    // Try multiple strategies to ensure content is loaded
+    const timer = setTimeout(scrollToSection, 150);
+
+    // Also try after next paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollToSection);
+    });
+
+    return () => clearTimeout(timer);
+  }, [location.hash, location.pathname]);
+
   return (
     <div className="flex h-screen bg-muted text-white">
       {/* Sidebar */}
@@ -121,10 +148,14 @@ export default function Sidebar() {
 
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => {
+            // Check both URL hash AND scroll position
             const isActive = item.section
               ? location.pathname === "/dashboard" &&
-                location.hash === `#${item.section}`
-              : location.pathname === item.path;
+                (location.hash === `#${item.section}` ||
+                  activeSection === item.section)
+              : location.pathname === item.path &&
+                !location.hash &&
+                !activeSection;
 
             return (
               <a

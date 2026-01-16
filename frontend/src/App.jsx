@@ -6,6 +6,7 @@ import Home from "./pages/Home.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import CreateProject from "./pages/CreateProject.jsx";
 import Landing from "./pages/Landing.jsx";
+import EditProject from "./pages/EditProject.jsx";
 
 import ProtectedRoute from "./components/ProtectedRoutes.jsx";
 import Sidebar from "./components/Sidebar.jsx";
@@ -47,6 +48,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProjectDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:projectId/edit"
+            element={
+              <ProtectedRoute>
+                <EditProject />
               </ProtectedRoute>
             }
           />

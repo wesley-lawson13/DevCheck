@@ -24,6 +24,14 @@ function Landing() {
     }
   };
 
+  const scrollToAbout = (e) => {
+    e.preventDefault();
+    const aboutSection = document.getElementById("about");
+    if (aboutSection) {
+      aboutSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <>
       <LandingHeader loggedIn={loggedIn} />
@@ -49,13 +57,14 @@ function Landing() {
               all in one place.
             </p>
           </div>
-          <Link
-            to="#about"
-            className="absolute bottom-8 text-lg text-green hover:underline hover:text-khaki transition flex flex-col items-center"
+          <a
+            href="#about"
+            onClick={scrollToAbout}
+            className="absolute bottom-8 text-lg text-green hover:underline hover:text-khaki transition flex flex-col items-center cursor-pointer"
           >
             <span className="mb-4">Learn How DevCheck Works</span>
             <ArrowDown className="items-center animate-bounce"></ArrowDown>
-          </Link>
+          </a>
         </section>
 
         <section
