@@ -155,7 +155,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://DevCheck-frontend.vercel.app",
+    "https://dev-check-wheat.vercel.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
