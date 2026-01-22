@@ -11,6 +11,8 @@ import EditProject from "./pages/EditProject.jsx";
 import ProtectedRoute from "./components/ProtectedRoutes.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 
+import { Analytics } from "@vercel/analytics/next";
+
 function Logout() {
   localStorage.clear();
   return <Navigate to="/" />;
@@ -24,6 +26,7 @@ function RegisterAndLogout() {
 function App() {
   return (
     <BrowserRouter>
+      <Analytics />
       <Routes>
         <Route element={<Sidebar />}>
           <Route
