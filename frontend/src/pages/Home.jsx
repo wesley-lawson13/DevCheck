@@ -20,7 +20,6 @@ function Home() {
     fetchUser();
   }, []);
 
-  // Fetch project details whenever projects change
   useEffect(() => {
     if (projects.length > 0) {
       fetchAllProjectDetails();
@@ -34,7 +33,6 @@ function Home() {
 
     const id = location.hash.replace("#", "");
 
-    // Double RAF ensures layout is complete
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const el = document.getElementById(id);
@@ -70,7 +68,7 @@ function Home() {
   const getProjectDetail = async (projectId) => {
     try {
       const res = await api.get(
-        `/checklists/projects/${projectId}/detail/?dashboard=true`
+        `/checklists/projects/${projectId}/detail/?dashboard=true`,
       );
 
       if (res.status === 200 || res.status === 201) {
@@ -104,7 +102,7 @@ function Home() {
                   taskCount += section.tasks.length;
 
                   const completedTasks = section.tasks.filter(
-                    (task) => task.completed === true
+                    (task) => task.completed === true,
                   );
                   completedCount += completedTasks.length;
                 }
@@ -114,7 +112,7 @@ function Home() {
         }
 
         console.log(
-          `Project "${project.name}" (ID: ${project.id}): ${taskCount} total tasks, ${completedCount} completed`
+          `Project "${project.name}" (ID: ${project.id}): ${taskCount} total tasks, ${completedCount} completed`,
         );
         tasksMap[project.id] = {
           completed: completedCount,
@@ -140,7 +138,7 @@ function Home() {
 
   const sortedProjects = (projects) => {
     return [...projects].sort(
-      (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+      (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
     );
   };
 
@@ -201,7 +199,7 @@ function Home() {
       if (res.status === 200 || res.status === 201) {
         setIssue("");
         alert(
-          "Issue submitted! Thank you for helping to make DevCheck better."
+          "Issue submitted! Thank you for helping to make DevCheck better.",
         );
       }
     } catch (err) {
@@ -261,7 +259,7 @@ function Home() {
             <h2 className="text-dark font-bold text-6xl justify-self-center">
               {
                 projects.filter(
-                  (project) => project.project_status === "In Development"
+                  (project) => project.project_status === "In Development",
                 ).length
               }
             </h2>
@@ -277,7 +275,7 @@ function Home() {
             <h2 className="text-dark font-bold text-6xl justify-self-center">
               {
                 projects.filter(
-                  (project) => project.project_status === "In Deployment"
+                  (project) => project.project_status === "In Deployment",
                 ).length
               }
             </h2>
@@ -286,7 +284,7 @@ function Home() {
       </div>
 
       {/* Projects Section - Wrap everything in section tag */}
-      <section id="projects" className="mb-8">
+      <section id="projects">
         <h1 className="text-2xl font-bold mb-6">Your Projects:</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-4">

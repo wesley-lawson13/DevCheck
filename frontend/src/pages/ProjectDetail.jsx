@@ -59,26 +59,22 @@ export default function ProjectDetail() {
           tasks: section.tasks.map((task) =>
             task.id === taskId
               ? { ...task, completed: !currentCompleted }
-              : task
+              : task,
           ),
         })),
-      }))
+      })),
     );
 
-    // Save to backend
     try {
       const res = await api.patch(`/checklists/tasks/${taskId}/`, {
         completed: !currentCompleted,
       });
 
-      // Optional: If you want to sync with backend response
       if (res.status !== 200) {
-        // Revert on failure
         getProject();
       }
     } catch (err) {
       console.error("Failed to toggle task:", err);
-      // Revert the optimistic update on error
       getProject();
     }
   };
@@ -98,14 +94,13 @@ export default function ProjectDetail() {
       console.log("Task created successfully, status:", res.status);
 
       if (res.status === 200 || res.status === 201) {
-        // Clear the input and hide the form BEFORE refreshing
         setNewTaskTitle((prev) => {
           const updated = { ...prev, [key]: "" };
           console.log(
             "Clearing newTaskTitle for key:",
             key,
             "Updated state:",
-            updated
+            updated,
           );
           return updated;
         });
@@ -135,7 +130,7 @@ export default function ProjectDetail() {
           ...section,
           tasks: section.tasks.filter((task) => task.id !== taskId),
         })),
-      }))
+      })),
     );
 
     try {
@@ -172,7 +167,7 @@ export default function ProjectDetail() {
         const sectionPromises = sectionTitles.map((title) =>
           api.post(`checklists/projects/${newPageId}/sections/`, {
             title: title,
-          })
+          }),
         );
 
         await Promise.all(sectionPromises);
@@ -268,7 +263,7 @@ export default function ProjectDetail() {
       if (res.status === 200 || res.status === 201) {
         setProjectStatus(newStatus);
         setSuccessMessage(
-          `Project status updated to "${newStatus}" successfully.`
+          `Project status updated to "${newStatus}" successfully.`,
         );
         await getProject();
       }
@@ -404,7 +399,7 @@ export default function ProjectDetail() {
                       className="rounded-xl bg-green text-sm text-white p-2"
                       onClick={() => {
                         const section = page.sections?.find(
-                          (s) => s.title === "MVP"
+                          (s) => s.title === "MVP",
                         );
                         handleAddClick(page.id, "MVP", section?.id);
                       }}
@@ -437,20 +432,20 @@ export default function ProjectDetail() {
                               <FaRegTrashCan size={15} />
                             </button>
                           </li>
-                        ))
+                        )),
                       )}
                     {(!page.sections ||
                       page.sections.length === 0 ||
                       !page.sections.some(
                         (s) =>
                           s.title === "MVP" &&
-                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
+                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id]),
                       )) && (
                       <li className="text-gray-400 italic">No MVP tasks</li>
                     )}
                     {(() => {
                       const section = page.sections?.find(
-                        (s) => s.title === "MVP"
+                        (s) => s.title === "MVP",
                       );
                       const key = section?.id || `${page.id}-MVP`;
                       return (
@@ -512,7 +507,7 @@ export default function ProjectDetail() {
                       className="rounded-xl bg-khaki text-sm text-white p-2"
                       onClick={() => {
                         const section = page.sections?.find(
-                          (s) => s.title === "DEV"
+                          (s) => s.title === "DEV",
                         );
                         handleAddClick(page.id, "DEV", section?.id);
                       }}
@@ -545,14 +540,14 @@ export default function ProjectDetail() {
                               <FaRegTrashCan size={15} />
                             </button>
                           </li>
-                        ))
+                        )),
                       )}
                     {(!page.sections ||
                       page.sections.length === 0 ||
                       !page.sections.some(
                         (s) =>
                           s.title === "DEV" &&
-                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
+                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id]),
                       )) && (
                       <li className="text-gray-400 italic">
                         No development tasks
@@ -560,7 +555,7 @@ export default function ProjectDetail() {
                     )}
                     {(() => {
                       const section = page.sections?.find(
-                        (s) => s.title === "DEV"
+                        (s) => s.title === "DEV",
                       );
                       const key = section?.id || `${page.id}-DEV`;
                       return (
@@ -622,7 +617,7 @@ export default function ProjectDetail() {
                       className="rounded-xl bg-dblue text-sm text-white p-2"
                       onClick={() => {
                         const section = page.sections?.find(
-                          (s) => s.title === "DEPLOY"
+                          (s) => s.title === "DEPLOY",
                         );
                         handleAddClick(page.id, "DEPLOY", section?.id);
                       }}
@@ -657,14 +652,14 @@ export default function ProjectDetail() {
                               <FaRegTrashCan size={15} />
                             </button>
                           </li>
-                        ))
+                        )),
                       )}
                     {(!page.sections ||
                       page.sections.length === 0 ||
                       !page.sections.some(
                         (s) =>
                           s.title === "DEPLOY" &&
-                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id])
+                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id]),
                       )) && (
                       <li className="text-gray-400 italic">
                         No deployment tasks
@@ -672,7 +667,7 @@ export default function ProjectDetail() {
                     )}
                     {(() => {
                       const section = page.sections?.find(
-                        (s) => s.title === "DEPLOY"
+                        (s) => s.title === "DEPLOY",
                       );
                       const key = section?.id || `${page.id}-DEPLOY`;
                       return (
@@ -699,7 +694,7 @@ export default function ProjectDetail() {
                                   handleSubmitTask(
                                     page.id,
                                     "DEPLOY",
-                                    section?.id
+                                    section?.id,
                                   );
                                 }
                               }}
