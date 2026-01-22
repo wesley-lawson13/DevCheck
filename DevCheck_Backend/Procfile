@@ -1,0 +1,1 @@
+web: gunicorn DevCheck_Backend.wsgi:application
