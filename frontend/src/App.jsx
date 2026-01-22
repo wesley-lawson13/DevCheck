@@ -11,7 +11,7 @@ import EditProject from "./pages/EditProject.jsx";
 import ProtectedRoute from "./components/ProtectedRoutes.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 function Logout() {
   localStorage.clear();
