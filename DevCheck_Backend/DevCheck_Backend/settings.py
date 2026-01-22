@@ -159,7 +159,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://DevCheck-frontend.vercel.app",
+    "https://dev-check-wheat.vercel.app",
 ]
 
 # FOR RENDER DEPLOYMENT
