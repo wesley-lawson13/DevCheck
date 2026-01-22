@@ -27,6 +27,9 @@ function Form({ route, method }) {
       }
     } catch (error) {
       alert(error);
+      if (error.response) {
+        console.log(error.response.data);
+      }
     } finally {
       setLoading(false);
     }
