@@ -291,10 +291,10 @@ function Home() {
           {allProjects.length === 0 && (
             <span className="font-light italic text-md text-dark">
               No projects yet.{" "}
-              <a href="create-project" className="text-khaki font-semibold">
+              {/* <a href="create-project" className="text-khaki font-semibold">
                 Create Your First Project
               </a>
-              .
+              . */}
             </span>
           )}
           {!showAllProjects
