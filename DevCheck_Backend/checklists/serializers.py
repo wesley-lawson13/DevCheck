@@ -37,6 +37,7 @@ class PageSerializer(serializers.ModelSerializer):
         }
 
 class ProjectSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
     class Meta:
         model = Project
         fields = '__all__'
@@ -67,6 +68,7 @@ class PageNestedSerializer(serializers.ModelSerializer):
 
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
     pages = PageNestedSerializer(many=True, read_only=True)
 
     class Meta:

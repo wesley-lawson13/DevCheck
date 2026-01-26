@@ -13,7 +13,7 @@ class Project(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     link = models.URLField(blank=True, null=True)
-    image = models.ImageField(blank=True, null=True, upload_to='projects/', default='defaults/copyLogo.png')
+    image = models.ImageField(blank=True, null=True, upload_to='projects/', default='https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png')
     project_status = models.CharField(max_length=20, default="MVP")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
