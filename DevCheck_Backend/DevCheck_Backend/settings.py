@@ -162,7 +162,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 # FOR RENDER DEPLOYMENT
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR /"staticfiles"
 
 MIDDLEWARE.insert(
     1, "whitenoise.middleware.WhiteNoiseMiddleware"
@@ -183,3 +183,6 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
 
+print("CLOUDINARY_CLOUD_NAME:", os.getenv("CLOUDINARY_CLOUD_NAME"))
+print("CLOUDINARY_API_KEY:", os.getenv("CLOUDINARY_API_KEY"))
+print("CLOUDINARY_API_SECRET:", os.getenv("CLOUDINARY_API_SECRET"))
