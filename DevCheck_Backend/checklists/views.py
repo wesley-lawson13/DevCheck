@@ -32,6 +32,7 @@ class ProjectListCreate(generics.ListCreateAPIView):
         return Project.objects.filter(owner=user)
 
     def perform_create(self, serializer):
+        print(self.request.FILES)
         serializer.save(owner=self.request.user)
 
 class ProjectDelete(generics.DestroyAPIView):
