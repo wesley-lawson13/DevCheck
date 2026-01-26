@@ -37,13 +37,18 @@ class PageSerializer(serializers.ModelSerializer):
         }
 
 class ProjectSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(use_url=True)
+    image = serializers.SerializerMethodField()
     class Meta:
         model = Project
         fields = '__all__'
         extra_kwargs = {
             'owner': {'read_only': True},
         }
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
 
 class ChecklistTaskNestedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,12 +73,17 @@ class PageNestedSerializer(serializers.ModelSerializer):
 
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(use_url=True)
+    image = serializers.SerializerMethodField()
     pages = PageNestedSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'link', 'pages', 'project_status', 'image']
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
 
 class IssueSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.id")
