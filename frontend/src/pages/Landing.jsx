@@ -155,23 +155,23 @@ function Landing() {
               {!loggedIn ? (
                 <span className="text-white/30 italic font-semibold">
                   Like what you see?{" "}
-                  <a
-                    href="/register"
+                  <Link
+                    to="/register"
                     className="mx-2 text-2xl font-bold text-green underline hover:text-khaki"
                   >
                     Register
-                  </a>
+                  </Link>
                   here!
                 </span>
               ) : (
                 <span className="text-white/30 italic font-semibold">
                   Back to the{" "}
-                  <a
-                    href="/dashboard"
+                  <Link
+                    to="/dashboard"
                     className="mx-2 text-2xl font-bold text-green underline hover:text-khaki"
                   >
                     Dashboard
-                  </a>{" "}
+                  </Link>{" "}
                   here!
                 </span>
               )}
