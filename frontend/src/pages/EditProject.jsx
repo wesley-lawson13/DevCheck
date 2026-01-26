@@ -113,12 +113,7 @@ export default function EditProject() {
 
         const res = await api.patch(
           `checklists/projects/${projectId}/detail/`,
-          submitData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
+          submitData
         );
 
         if (res.status === 200 || res.status === 201) {

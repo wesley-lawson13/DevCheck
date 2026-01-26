@@ -77,11 +77,7 @@ export default function CreateProject() {
       if (formData.thumbnail)
         formDataToSend.append("image", formData.thumbnail);
 
-      const res = await api.post("checklists/projects/", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const res = await api.post("checklists/projects/", formDataToSend);
 
       const projectId = res.data.id;
 
