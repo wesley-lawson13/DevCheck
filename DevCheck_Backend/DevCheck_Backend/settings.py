@@ -15,6 +15,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 import dj_database_url
+import cloudinary
 
 load_dotenv()
 
@@ -106,7 +107,7 @@ WSGI_APPLICATION = 'DevCheck_Backend.wsgi.application'
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
+        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}"
     )
 }
 
@@ -186,6 +187,10 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
 
-print("CLOUDINARY_CLOUD_NAME:", os.getenv("CLOUDINARY_CLOUD_NAME"))
-print("CLOUDINARY_API_KEY:", os.getenv("CLOUDINARY_API_KEY"))
-print("CLOUDINARY_API_SECRET:", os.getenv("CLOUDINARY_API_SECRET"))
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+    secure=True
+)
+
