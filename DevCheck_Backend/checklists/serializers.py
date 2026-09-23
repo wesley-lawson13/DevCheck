@@ -1,4 +1,6 @@
+from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from .models import Project, Page, ChecklistSection, Task, Issue
@@ -32,15 +34,34 @@ class ProjectImageMixin:
         data["image"] = url
         return data
 
-class UserSerializer(serializers.ModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, style={"input_type": "password"})
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'date_joined'] # fields to be serialized on input / return 
-        extra_kwargs = {"password": {"write_only": True}} # don't return password on GET requests
+        fields = ['id', 'username', 'password', 'date_joined']
+        read_only_fields = ['id', 'date_joined']
+
+    def validate(self, attrs):
+        # Build an unsaved user so similarity validators can compare against the username.
+        candidate = User(username=attrs.get("username"))
+        try:
+            password_validation.validate_password(attrs["password"], user=candidate)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
+        return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
+        return User.objects.create_user(**validated_data)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Read-only view of the current user."""
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'date_joined']
+        read_only_fields = fields
 
 class ChecklistTaskSerializer(serializers.ModelSerializer):
     class Meta:
