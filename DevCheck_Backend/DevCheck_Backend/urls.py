@@ -4,7 +4,6 @@ from django.urls import include, path
 from checklists.views import CreateUserView, UserDetailView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-# For development ONLY
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -16,4 +15,8 @@ urlpatterns = [
     path('checklists/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('checklists-auth/', include('rest_framework.urls')),
     path('checklists/', include('checklists.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Serve uploaded media from ./media in local development only.
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
