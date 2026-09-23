@@ -9,12 +9,18 @@ class Issue(models.Model):
 
 class Project(models.Model):
     """A project groups related website pages together."""
+
+    class Status(models.TextChoices):
+        MVP = "MVP", "MVP"
+        DEV = "DEV", "In Development"
+        DEPLOY = "DEPLOY", "In Deployment"
+
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="projects")
     name = models.CharField(max_length=100)
     description = models.TextField()
     link = models.URLField(blank=True, null=True)
     image = models.ImageField(blank=True, null=True, upload_to='projects/')
-    project_status = models.CharField(max_length=20, default="MVP")
+    project_status = models.CharField(max_length=20, choices=Status.choices, default=Status.MVP)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)
 

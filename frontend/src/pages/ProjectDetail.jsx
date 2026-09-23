@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
 import api from "../api";
+import { STATUS_BG, STATUS_CODES, STATUS_LABELS } from "../constants";
 import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
@@ -43,11 +44,7 @@ export default function ProjectDetail() {
     }
   };
 
-  const statusColors = {
-    MVP: "bg-green",
-    "In Development": "bg-beige",
-    "In Deployment": "bg-blue",
-  };
+  const statusColors = STATUS_BG;
 
   const toggleTask = async (taskId, currentCompleted) => {
     // Optimistic update - update UI immediately
@@ -263,7 +260,7 @@ export default function ProjectDetail() {
       if (res.status === 200 || res.status === 201) {
         setProjectStatus(newStatus);
         setSuccessMessage(
-          `Project status updated to "${newStatus}" successfully.`,
+          `Project status updated to "${STATUS_LABELS[newStatus]}" successfully.`,
         );
         await getProject();
       }
@@ -342,11 +339,11 @@ export default function ProjectDetail() {
               {project.name}'s Status:
             </span>
             <div className="flex gap-3">
-              {["MVP", "In Development", "In Deployment"].map((status) => (
+              {STATUS_CODES.map((status) => (
                 <button
                   key={status}
                   onClick={() => {
-                    if (project.status !== status) {
+                    if (projectStatus !== status) {
                       setStatusToSet(status);
                       setShowUpdateStatusModal(true);
                     }
@@ -357,7 +354,7 @@ export default function ProjectDetail() {
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
                 >
-                  {status}
+                  {STATUS_LABELS[status]}
                 </button>
               ))}
             </div>
@@ -818,7 +815,7 @@ export default function ProjectDetail() {
 
             <p className="text-green mb-6">
               Switch project status to{" "}
-              <strong className="text-green">{statusToSet}</strong>?
+              <strong className="text-green">{STATUS_LABELS[statusToSet]}</strong>?
             </p>
 
             <div className="flex justify-end gap-3">

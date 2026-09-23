@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import api from "../api";
+import { STATUS_BG, STATUS_LABELS, STATUS_TEXT } from "../constants";
 import { FaRegTrashCan } from "react-icons/fa6";
 
 function Home() {
@@ -215,17 +216,8 @@ function Home() {
 
   const formattedDateJoined = new Date(user?.date_joined).toLocaleDateString();
 
-  const bgColors = {
-    MVP: "bg-green",
-    "In Development": "bg-beige",
-    "In Deployment": "bg-blue",
-  };
-
-  const txtColors = {
-    MVP: "text-green",
-    "In Development": "text-beige",
-    "In Deployment": "text-blue",
-  };
+  const bgColors = STATUS_BG;
+  const txtColors = STATUS_TEXT;
 
   return (
     <div className="px-8 text-white">
@@ -259,7 +251,7 @@ function Home() {
             <h2 className="text-dark font-bold text-6xl justify-self-center">
               {
                 projects.filter(
-                  (project) => project.project_status === "In Development",
+                  (project) => project.project_status === "DEV",
                 ).length
               }
             </h2>
@@ -275,7 +267,7 @@ function Home() {
             <h2 className="text-dark font-bold text-6xl justify-self-center">
               {
                 projects.filter(
-                  (project) => project.project_status === "In Deployment",
+                  (project) => project.project_status === "DEPLOY",
                 ).length
               }
             </h2>
@@ -319,7 +311,7 @@ function Home() {
                         bgColors[project.project_status]
                       } rounded-xl`}
                     >
-                      {project.project_status}
+                      {STATUS_LABELS[project.project_status]}
                     </span>
                     {projectTasks[project.id]?.total > 0 ? (
                       <span
@@ -367,7 +359,7 @@ function Home() {
                         bgColors[project.project_status]
                       } rounded-xl`}
                     >
-                      {project.project_status}
+                      {STATUS_LABELS[project.project_status]}
                     </span>
                     {projectTasks[project.id]?.total > 0 ? (
                       <span
@@ -468,7 +460,7 @@ function Home() {
                           txtColors[project.project_status]
                         }`}
                       >
-                        {project.project_status}
+                        {STATUS_LABELS[project.project_status]}
                       </span>
                     </div>
                     <div className="col-span-4 flex p-2 items-center">
