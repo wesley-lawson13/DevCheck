@@ -84,6 +84,16 @@ npm run dev
 Your React frontend should now be running at:
 http://127.0.0.1:5173/
 
+### 4. Running the Tests
+
+```bash
+# Backend
+cd DevCheck_Backend && pip install -r requirements-dev.txt && pytest
+
+# Frontend
+cd frontend && npm test -- --run
+```
+
 ---
 
 ## Future Plans
