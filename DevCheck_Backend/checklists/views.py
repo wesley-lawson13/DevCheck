@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from .serializers import * 
 from .models import Project, Page, ChecklistSection, Task, Issue
 
@@ -25,7 +25,7 @@ class ProjectListCreate(generics.ListCreateAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]    
 
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         user = self.request.user
@@ -46,7 +46,7 @@ class ProjectDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = ProjectDetailSerializer
     permission_classes = [IsAuthenticated]
 
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         return Project.objects.filter(owner=self.request.user).prefetch_related('pages__sections__tasks')

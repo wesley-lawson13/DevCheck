@@ -20,6 +20,7 @@ export default function EditProject() {
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [initialThumbnail, setInitialThumbnail] = useState(null);
+  const [thumbnailRemoved, setThumbnailRemoved] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -75,6 +76,7 @@ export default function EditProject() {
 
       setErrors({ ...errors, image: null });
       setThumbnail(file);
+      setThumbnailRemoved(false);
 
       // Create preview
       const reader = new FileReader();
@@ -88,16 +90,11 @@ export default function EditProject() {
   const removeThumbnail = () => {
     setThumbnail(null);
     setThumbnailPreview(null);
+    setThumbnailRemoved(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate that a thumbnail exists
-    if (!thumbnailPreview) {
-      setErrors({ ...errors, image: "Please upload a thumbnail image" });
-      return;
-    }
 
     try {
       setSaving(true);
@@ -120,14 +117,17 @@ export default function EditProject() {
           navigate(`/projects/${projectId}`);
         }
       } else {
-        // If no new image, just send JSON (keeps existing image)
+        // No new file: send JSON. Omitting `image` keeps the existing one;
+        // `image: null` clears it.
+        const body = {
+          name: formData.name,
+          description: formData.description,
+          link: formData.link,
+        };
+        if (thumbnailRemoved) body.image = null;
         const res = await api.patch(
           `checklists/projects/${projectId}/detail/`,
-          {
-            name: formData.name,
-            description: formData.description,
-            link: formData.link,
-          }
+          body
         );
 
         if (res.status === 200 || res.status === 201) {
@@ -148,6 +148,7 @@ export default function EditProject() {
       setFormData(initialData);
       setThumbnailPreview(initialThumbnail);
       setThumbnail(null);
+      setThumbnailRemoved(false);
     }
   };
 
@@ -172,7 +173,7 @@ export default function EditProject() {
             {/* Thumbnail Upload */}
             <div>
               <label className="block text-sm font-medium text-dark mb-2">
-                Thumbnail Image <span className="text-red-500">*</span>
+                Thumbnail Image <span className="text-dark-400">(optional)</span>
               </label>
               {thumbnailPreview ? (
                 <div className="relative inline-block">

@@ -3,6 +3,35 @@ from rest_framework import serializers
 
 from .models import Project, Page, ChecklistSection, Task, Issue
 
+DEFAULT_PROJECT_IMAGE_URL = "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+
+class ProjectImageMixin:
+    """Lets the model's ImageField handle uploads; reads return a full URL or the default logo."""
+
+    def validate_image(self, image):
+        if image is None:
+            return image
+        if image.size > MAX_IMAGE_BYTES:
+            raise serializers.ValidationError("Image must be 10MB or smaller.")
+        content_type = getattr(image, "content_type", None)
+        if content_type and not content_type.startswith("image/"):
+            raise serializers.ValidationError("Upload an image file.")
+        return image
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not instance.image:
+            data["image"] = DEFAULT_PROJECT_IMAGE_URL
+            return data
+        url = instance.image.url
+        request = self.context.get("request")
+        if request is not None and not url.startswith(("http://", "https://")):
+            url = request.build_absolute_uri(url)
+        data["image"] = url
+        return data
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -36,19 +65,13 @@ class PageSerializer(serializers.ModelSerializer):
             'project': {'read_only': True} 
         }
 
-class ProjectSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+class ProjectSerializer(ProjectImageMixin, serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = '__all__'
         extra_kwargs = {
             'owner': {'read_only': True},
         }
-
-    def get_image(self, obj):
-        if obj.image:
-            return obj.image.url
-        return "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
 
 class ChecklistTaskNestedSerializer(serializers.ModelSerializer):
     class Meta:
@@ -72,18 +95,12 @@ class PageNestedSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'sections']
 
 
-class ProjectDetailSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+class ProjectDetailSerializer(ProjectImageMixin, serializers.ModelSerializer):
     pages = PageNestedSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'link', 'pages', 'project_status', 'image']
-
-    def get_image(self, obj):
-        if obj.image:
-            return obj.image.url
-        return "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
 
 class IssueSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.id")
