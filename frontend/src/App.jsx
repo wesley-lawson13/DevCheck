@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import api from "./api";
+import { REFRESH_TOKEN } from "./constants";
 import ProjectDetail from "./pages/ProjectDetail.jsx";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
@@ -14,7 +17,14 @@ import Sidebar from "./components/Sidebar.jsx";
 import { Analytics } from "@vercel/analytics/react";
 
 function Logout() {
-  localStorage.clear();
+  useEffect(() => {
+    const refresh = localStorage.getItem(REFRESH_TOKEN);
+    localStorage.clear();
+    // Revoke the refresh token server-side; failure shouldn't block logging out.
+    if (refresh) {
+      api.post("checklists/token/blacklist/", { refresh }).catch(() => {});
+    }
+  }, []);
   return <Navigate to="/" />;
 }
 

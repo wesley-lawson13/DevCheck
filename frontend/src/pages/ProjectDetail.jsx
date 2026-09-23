@@ -37,10 +37,7 @@ export default function ProjectDetail() {
       console.error("Error status:", err.response?.status);
       console.error("Error data:", err.response?.data);
 
-      // If it's a 401 error, don't show alert since task was still created
-      if (err.response?.status !== 401) {
-        alert("Failed to fetch project details");
-      }
+      alert("Failed to fetch project details");
     }
   };
 
