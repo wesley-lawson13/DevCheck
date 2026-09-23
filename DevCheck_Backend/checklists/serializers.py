@@ -77,6 +77,18 @@ class ChecklistSectionSerializer(serializers.ModelSerializer):
             'page': {'read_only': True}
         }
 
+    def validate_title(self, value):
+        # The (page, title) unique validator is skipped because `page` is read-only,
+        # so enforce it here to return 400 instead of an IntegrityError 500.
+        page = self.context.get('page') or getattr(self.instance, 'page', None)
+        if page is not None:
+            clashes = page.sections.filter(title=value)
+            if self.instance is not None:
+                clashes = clashes.exclude(pk=self.instance.pk)
+            if clashes.exists():
+                raise serializers.ValidationError("This page already has a section with that title.")
+        return value
+
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page

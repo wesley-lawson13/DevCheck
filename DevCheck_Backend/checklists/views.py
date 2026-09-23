@@ -1,5 +1,5 @@
 from django.utils import timezone
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 
 from rest_framework import generics
@@ -68,7 +68,7 @@ class PageListCreate(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         project_id = self.kwargs['project_id']
-        project = Project.objects.get(id=project_id, owner=self.request.user)
+        project = get_object_or_404(Project, id=project_id, owner=self.request.user)
         serializer.save(project=project)
 
 class PageDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -86,10 +86,21 @@ class ChecklistSectionListCreate(generics.ListCreateAPIView):
         page_id = self.kwargs['page_id']
         return ChecklistSection.objects.filter(page__project__owner=self.request.user, page_id=page_id)
 
+    def get_page(self):
+        if not hasattr(self, '_page'):
+            self._page = get_object_or_404(
+                Page, id=self.kwargs['page_id'], project__owner=self.request.user
+            )
+        return self._page
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.request.method == 'POST':
+            context['page'] = self.get_page()
+        return context
+
     def perform_create(self, serializer):
-        page_id = self.kwargs['page_id']
-        page = Page.objects.get(id=page_id, project__owner=self.request.user)
-        serializer.save(page=page)
+        serializer.save(page=self.get_page())
 
 class ChecklistSectionDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ChecklistSectionSerializer
@@ -108,7 +119,9 @@ class TaskListCreate(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         section_id = self.kwargs['section_id']
-        section = ChecklistSection.objects.get(id=section_id, page__project__owner=self.request.user)
+        section = get_object_or_404(
+            ChecklistSection, id=section_id, page__project__owner=self.request.user
+        )
         serializer.save(section=section)
 
 class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
