@@ -29,3 +29,7 @@ projects
 .env
 *.sqlite3
 __pycache__/
+# Python / Django
+*.pyc
+media/
+staticfiles/

@@ -51,23 +51,21 @@ cd devcheck
 cd DevCheck_Backend
 python -m venv venv
 source venv/bin/activate   # On Windows use: venv\Scripts\activate
-```
-
-#### Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
-#### Apply Database Migrations
+#### Configure Environment Variables
+
+Copy the example file and edit it (`DEBUG=True` is required for local development):
+
+```bash
+cp .env.example .env
+```
+
+#### Apply Database Migrations and Run the Server
 
 ```bash
 python manage.py migrate
-```
-
-#### Run the Backend Server
-
-```bash
 python manage.py runserver
 ```
 
@@ -78,32 +76,13 @@ http://127.0.0.1:8000/
 
 ```bash
 cd ../frontend
-```
-
-#### Install Npm Packages
-
-```bash
+cp .env.example .env       # points the app at http://127.0.0.1:8000
 npm install
-```
-
-#### Start the Development Server
-
-```bash
 npm run dev
 ```
 
 Your React frontend should now be running at:
 http://127.0.0.1:5173/
-
-### 4. Environment Variables:
-
-#### Frontend (.env)
-
-Create a .env file inside the frontend/ directory with the following:
-
-```bash
-VITE_API_URL=http://127.0.0.1:8000
-```
 
 ---
 
