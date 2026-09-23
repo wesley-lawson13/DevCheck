@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 import os
 import dj_database_url
@@ -25,11 +26,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-dev-key")
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False") == "True"
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("SECRET_KEY must be set when DEBUG is off.")
+    SECRET_KEY = "unsafe-dev-key"
 
 ALLOWED_HOSTS = [
     h.strip()

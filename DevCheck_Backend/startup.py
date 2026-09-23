@@ -13,7 +13,9 @@ if os.environ.get("CREATE_SUPERUSER") == "True":
     # Read credentials from environment variables
     username = os.environ.get("SUPERUSER_USERNAME", "admin")
     email = os.environ.get("SUPERUSER_EMAIL", "admin@example.com")
-    password = os.environ.get("SUPERUSER_PASSWORD", "StrongPassword123")
+    password = os.environ.get("SUPERUSER_PASSWORD")
+    if not password:
+        raise SystemExit("SUPERUSER_PASSWORD must be set when CREATE_SUPERUSER=True.")
 
     if not User.objects.filter(username=username).exists():
         User.objects.create_superuser(username=username, email=email, password=password)

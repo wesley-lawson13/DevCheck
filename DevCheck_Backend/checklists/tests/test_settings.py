@@ -60,3 +60,16 @@ def test_project_root_files_are_not_served_in_debug(debug_urls, anon_client):
     assert anon_client.get("/.env").status_code == 404
     assert anon_client.get("/db.sqlite3").status_code == 404
 
+
+def test_missing_secret_key_fails_outside_debug(monkeypatch):
+    from django.core.exceptions import ImproperlyConfigured
+
+    monkeypatch.setenv("SECRET_KEY", "")
+    with pytest.raises(ImproperlyConfigured):
+        load_settings(monkeypatch, cloudinary=False, debug=False)
+
+
+def test_missing_secret_key_is_tolerated_in_debug(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "")
+    conf = load_settings(monkeypatch, cloudinary=False, debug=True)
+    assert conf["SECRET_KEY"] == "unsafe-dev-key"
