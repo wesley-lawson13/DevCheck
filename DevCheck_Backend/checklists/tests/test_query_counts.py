@@ -90,3 +90,15 @@ def test_report_n_plus_one_savings(api_client, user, capsys):
         )
     with capsys.disabled():
         print("\n".join(lines))
+
+
+@pytest.mark.parametrize("projects", [1, 10, 30])
+def test_project_list_query_count_does_not_grow_with_projects(api_client, user, projects):
+    """The flat list serializer touches no relations: one query, however many projects."""
+    for i in range(projects):
+        build_project(user, pages=1, name=f"P{i}")
+    with CaptureQueriesContext(connection) as ctx:
+        res = api_client.get("/checklists/projects/")
+    assert res.status_code == 200
+    assert len(res.data if isinstance(res.data, list) else res.data["results"]) == projects
+    assert len(ctx) == 1, [q["sql"] for q in ctx.captured_queries]
