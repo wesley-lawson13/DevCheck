@@ -45,7 +45,7 @@ def test_create_with_invalid_status_is_400(api_client):
 # --- 2.3: list / create / update / delete ---
 
 def delete_url(project):
-    return f"/checklists/projects/delete/{project.id}/"
+    return f"/checklists/projects/{project.id}/"
 
 
 def rows(res):
@@ -138,7 +138,7 @@ def test_delete_cascades_to_the_whole_tree(api_client, user, other_user, project
 
 
 def test_delete_missing_project_is_404(api_client):
-    assert api_client.delete("/checklists/projects/delete/9999/").status_code == 404
+    assert api_client.delete("/checklists/projects/9999/").status_code == 404
 
 
 def test_detail_returns_the_nested_tree(api_client, user, project_tree):

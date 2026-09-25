@@ -7,7 +7,17 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
-from .serializers import * 
+from .serializers import (
+    ChecklistSectionSerializer,
+    ChecklistTaskSerializer,
+    IssueSerializer,
+    PageSerializer,
+    ProjectDetailSerializer,
+    ProjectSerializer,
+    ProjectTreeSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
 from .models import Project, Page, ChecklistSection, Task, Issue
 
 class CreateUserView(generics.CreateAPIView):

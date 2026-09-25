@@ -212,7 +212,10 @@ class ProjectTreeSerializer(serializers.Serializer):
 
 
 class IssueSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source="user.id")
+    # PrimaryKeyRelatedField (not ReadOnlyField(source="user.id")) so a null user, left behind
+    # when the reporting account is deleted, serializes as null instead of raising.
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Issue
         fields = ['description', 'user', 'date_submitted']

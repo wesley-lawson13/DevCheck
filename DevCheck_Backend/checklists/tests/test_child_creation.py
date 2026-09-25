@@ -18,13 +18,13 @@ def test_create_page_under_missing_project_is_404(api_client):
 def test_create_section_under_foreign_page_is_404(api_client, other_user, project_tree):
     _, page, *_ = project_tree(other_user)
     before = ChecklistSection.objects.count()
-    res = api_client.post(f"/checklists/projects/{page.id}/sections/", {"title": "MVP"}, format="json")
+    res = api_client.post(f"/checklists/pages/{page.id}/sections/", {"title": "MVP"}, format="json")
     assert res.status_code == 404
     assert ChecklistSection.objects.count() == before
 
 
 def test_create_section_under_missing_page_is_404(api_client):
-    res = api_client.post("/checklists/projects/9999/sections/", {"title": "MVP"}, format="json")
+    res = api_client.post("/checklists/pages/9999/sections/", {"title": "MVP"}, format="json")
     assert res.status_code == 404
 
 
@@ -32,20 +32,20 @@ def test_create_task_under_foreign_section_is_404(api_client, other_user, projec
     _, _, sections, _ = project_tree(other_user)
     before = Task.objects.count()
     res = api_client.post(
-        f"/checklists/projects/{sections['MVP'].id}/tasks/", {"title": "T"}, format="json"
+        f"/checklists/sections/{sections['MVP'].id}/tasks/", {"title": "T"}, format="json"
     )
     assert res.status_code == 404
     assert Task.objects.count() == before
 
 
 def test_create_task_under_missing_section_is_404(api_client):
-    res = api_client.post("/checklists/projects/9999/tasks/", {"title": "T"}, format="json")
+    res = api_client.post("/checklists/sections/9999/tasks/", {"title": "T"}, format="json")
     assert res.status_code == 404
 
 
 def test_duplicate_section_is_400(api_client, user, project_tree):
     _, page, *_ = project_tree(user)
-    res = api_client.post(f"/checklists/projects/{page.id}/sections/", {"title": "MVP"}, format="json")
+    res = api_client.post(f"/checklists/pages/{page.id}/sections/", {"title": "MVP"}, format="json")
     assert res.status_code == 400
     assert "title" in res.data
     assert page.sections.filter(title="MVP").count() == 1
@@ -54,7 +54,7 @@ def test_duplicate_section_is_400(api_client, user, project_tree):
 def test_new_section_title_is_created(api_client, user, project_tree):
     _, page, sections, _ = project_tree(user)
     sections["DEV"].delete()
-    res = api_client.post(f"/checklists/projects/{page.id}/sections/", {"title": "DEV"}, format="json")
+    res = api_client.post(f"/checklists/pages/{page.id}/sections/", {"title": "DEV"}, format="json")
     assert res.status_code == 201, res.data
 
 

@@ -2,8 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Issue(models.Model):
-    """A issue form for superusers to check suggestions / live issues in development"""
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="complaints")
+    """An issue form for superusers to check suggestions / live issues in development"""
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="complaints")
     description = models.TextField()
     date_submitted = models.DateTimeField(auto_now_add=True)
 

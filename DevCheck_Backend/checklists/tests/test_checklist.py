@@ -5,8 +5,8 @@ import pytest
 from checklists.models import ChecklistSection, Page, Task
 
 PAGES = "/checklists/projects/{}/pages/"
-SECTIONS = "/checklists/projects/{}/sections/"  # NB: keyed by page id
-TASKS = "/checklists/projects/{}/tasks/"  # NB: keyed by section id
+SECTIONS = "/checklists/pages/{}/sections/"
+TASKS = "/checklists/sections/{}/tasks/"
 
 
 def rows(res):

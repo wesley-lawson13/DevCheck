@@ -114,7 +114,7 @@ describe('ProjectDetail', () => {
     const user = userEvent.setup()
     let postBody
     server.use(
-      http.post(`${API}/checklists/projects/100/tasks/`, async ({ request }) => {
+      http.post(`${API}/checklists/sections/100/tasks/`, async ({ request }) => {
         postBody = await request.json()
         tree.pages[0].sections[0].tasks.push({ id: 1001, title: postBody.title, completed: false })
         return HttpResponse.json({ id: 1001, ...postBody, section: 100 }, { status: 201 })
@@ -136,7 +136,7 @@ describe('ProjectDetail', () => {
     const user = userEvent.setup()
     let posted = false
     server.use(
-      http.post(`${API}/checklists/projects/100/tasks/`, () => {
+      http.post(`${API}/checklists/sections/100/tasks/`, () => {
         posted = true
         return HttpResponse.json({}, { status: 201 })
       }),

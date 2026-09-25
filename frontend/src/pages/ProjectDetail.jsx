@@ -80,7 +80,7 @@ export default function ProjectDetail() {
     console.log("Current newTaskTitle state:", newTaskTitle);
 
     try {
-      const res = await api.post(`/checklists/projects/${sectionId}/tasks/`, {
+      const res = await api.post(`/checklists/sections/${sectionId}/tasks/`, {
         title,
         completed: false,
       });

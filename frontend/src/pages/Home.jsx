@@ -107,7 +107,7 @@ function Home() {
     }
 
     try {
-      const res = await api.delete(`checklists/projects/delete/${projectId}/`);
+      const res = await api.delete(`checklists/projects/${projectId}/`);
 
       if (res.status === 200 || res.status === 204) {
         setShowDeleteProjectModal(false);

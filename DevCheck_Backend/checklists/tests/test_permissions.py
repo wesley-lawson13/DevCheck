@@ -27,7 +27,7 @@ DETAIL_CASES = [
         "/checklists/projects/{project}/detail/",
         {"name": "pwned", "description": "x", "project_status": "DEV"},
     ),
-    ("project-delete", "delete", "/checklists/projects/delete/{project}/", None),
+    ("project-delete", "delete", "/checklists/projects/{project}/", None),
     ("project-viewed", "post", "/checklists/projects/{project}/viewed/", None),
     ("project-tree-create", "post", "/checklists/projects/{project}/tree/", {"pages": [{"name": "pwned"}]}),
     ("page-get", "get", "/checklists/pages/{page}/", None),
@@ -43,14 +43,14 @@ DETAIL_CASES = [
     ("task-put", "put", "/checklists/tasks/{task}/", {"title": "pwned", "completed": True}),
     ("task-delete", "delete", "/checklists/tasks/{task}/", None),
     ("page-create", "post", "/checklists/projects/{project}/pages/", {"name": "pwned"}),
-    ("section-create", "post", "/checklists/projects/{page}/sections/", {"title": "MVP"}),
-    ("task-create", "post", "/checklists/projects/{section}/tasks/", {"title": "pwned"}),
+    ("section-create", "post", "/checklists/pages/{page}/sections/", {"title": "MVP"}),
+    ("task-create", "post", "/checklists/sections/{section}/tasks/", {"title": "pwned"}),
 ]
 
 LIST_CASES = [
     ("pages", "/checklists/projects/{project}/pages/"),
-    ("sections", "/checklists/projects/{page}/sections/"),
-    ("tasks", "/checklists/projects/{section}/tasks/"),
+    ("sections", "/checklists/pages/{page}/sections/"),
+    ("tasks", "/checklists/sections/{section}/tasks/"),
 ]
 
 
