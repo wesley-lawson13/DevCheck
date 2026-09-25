@@ -6,11 +6,8 @@ export default function Header({ title }) {
   const { projectId } = useParams();
   const location = useLocation();
 
-  console.log(location);
-
   const isProjectPage = Boolean(projectId);
   const isEditPage = location.pathname.endsWith("/edit");
-  console.log(isEditPage);
 
   return (
     <header className="flex items-center justify-between bg-white px-6 py-3 border-b border-khaki/30">
@@ -20,7 +17,7 @@ export default function Header({ title }) {
       <div className="flex items-center gap-4">
         {isProjectPage && !isEditPage ? (
           <Link
-            to={`projects/${projectId}/edit`}
+            to={`/projects/${projectId}/edit`}
             className="flex gap-2 px-4 py-2 text-md font-bold bg-khaki/80 text-white rounded-lg hover:bg-khaki hover:shadow-lg transition"
           >
             <IoCreateOutline size={25} />
@@ -28,7 +25,7 @@ export default function Header({ title }) {
           </Link>
         ) : isEditPage ? (
           <Link
-            to={`projects/${projectId}`}
+            to={`/projects/${projectId}`}
             className="flex gap-2 px-4 py-2 text-md font-bold bg-dark text-white rounded-lg hover:bg-dark/60 hover:shadow-lg transition"
           >
             <ArrowBigLeft size={25} />
@@ -36,7 +33,7 @@ export default function Header({ title }) {
           </Link>
         ) : (
           <Link
-            to={`create-project`}
+            to="/create-project"
             className="flex gap-2 items-end px-4 py-2 text-md font-bold bg-khaki/80 text-white rounded-lg hover:bg-khaki hover:shadow-lg transition"
           >
             <IoCreateOutline size={25} />

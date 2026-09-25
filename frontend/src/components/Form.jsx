@@ -2,18 +2,21 @@ import { useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
+import { getErrorMessage } from "../utils/errors";
 import "../styles/Form.css";
 
 function Form({ route, method }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const name = method === "login" ? "Login" : "Register";
 
   const handleSubmit = async (e) => {
     setLoading(true);
+    setError("");
     e.preventDefault();
 
     try {
@@ -25,11 +28,8 @@ function Form({ route, method }) {
       } else {
         navigate("/login");
       }
-    } catch (error) {
-      alert(error);
-      if (error.response) {
-        console.log(error.response.data);
-      }
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -41,6 +41,7 @@ function Form({ route, method }) {
       className="bg-muted max-w-2xl max-h-4xl px-2 py-3 rounded-lg text-center shadow-xl"
     >
       <h1>{name}</h1>
+      {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
       <input
         className="form-input"
         type="text"

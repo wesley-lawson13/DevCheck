@@ -15,8 +15,7 @@ function ProtectedRoute({children}) {
         try {
             await refreshAccessToken()
             setIsAuthorized(true)
-        } catch(error) {
-            console.log(error)
+        } catch {
             setIsAuthorized(false)
         }
     }

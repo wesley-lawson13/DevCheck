@@ -102,7 +102,9 @@ export default function Sidebar() {
     sections.forEach((section) => observer.observe(section));
 
     return () => observer.disconnect();
-  }, []);
+    // Home's sections are re-mounted on route changes, so the observer needs
+    // to resubscribe whenever we're back on a route that renders them.
+  }, [location.pathname]);
 
   // Scroll to hash section when navigating from different page
   useEffect(() => {
@@ -115,8 +117,6 @@ export default function Sidebar() {
       if (el) {
         // Scroll the main container, not the window
         el.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        console.log(`Element with id "${id}" not found`);
       }
     };
 

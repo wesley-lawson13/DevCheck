@@ -18,9 +18,8 @@ function Landing() {
       if (res.status === 200 || res.status === 201) {
         setLoggedIn(true);
       }
-    } catch (err) {
+    } catch {
       setLoggedIn(false);
-      console.log("Failed to fetch user. Is the user logged in?", err);
     }
   };
 

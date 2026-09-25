@@ -5,6 +5,7 @@ import ConfirmModal from "../components/ConfirmModal";
 import ProjectCard from "../components/ProjectCard";
 import * as projectsApi from "../services/projects";
 import { STATUS_BG, STATUS_LABELS, STATUS_TEXT } from "../constants";
+import { getErrorMessage } from "../utils/errors";
 import { FaRegTrashCan } from "react-icons/fa6";
 
 function Home() {
@@ -13,6 +14,7 @@ function Home() {
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     getProjects();
@@ -54,11 +56,8 @@ function Home() {
     projectsApi
       .listProjects()
       .then((res) => res.data)
-      .then((data) => {
-        setProjects(data);
-        console.log(data);
-      })
-      .catch((err) => alert(err));
+      .then((data) => setProjects(data))
+      .catch((err) => setErrorMessage(getErrorMessage(err)));
   };
 
   // Most recently viewed first; projects never opened sort after those that have
@@ -103,10 +102,7 @@ function Home() {
   }
 
   const deleteProject = async (projectId) => {
-    if (!projectId) {
-      console.log("No project id provided.");
-      return;
-    }
+    if (!projectId) return;
 
     try {
       const res = await projectsApi.deleteProject(projectId);
@@ -117,14 +113,14 @@ function Home() {
         await getProjects();
       }
     } catch (err) {
-      console.error("Failed to delete project:", err);
-      alert("Failed to delete project.");
+      setErrorMessage(getErrorMessage(err, "Failed to delete project."));
     }
   };
 
   // Submit issue form logic
   const [issue, setIssue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [issueSuccess, setIssueSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -137,13 +133,13 @@ function Home() {
 
       if (res.status === 200 || res.status === 201) {
         setIssue("");
-        alert(
+        setErrorMessage("");
+        setIssueSuccess(
           "Issue submitted! Thank you for helping to make DevCheck better.",
         );
       }
     } catch (err) {
-      console.error(err.response?.data);
-      alert("Something went wrong");
+      setErrorMessage(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -159,6 +155,15 @@ function Home() {
 
   return (
     <div className="px-8 text-white">
+      {errorMessage && (
+        <div className="flex justify-between w-full bg-red-500/60 border border-red-500 text-white px-4 py-3 rounded mb-5">
+          {errorMessage}
+          <button className="text-muted" onClick={() => setErrorMessage("")}>
+            &times;
+          </button>
+        </div>
+      )}
+
       <h1 className="text-2xl font-medium mb-6">
         Welcome, <span className="font-bold">{user?.username}!</span>
       </h1>
@@ -221,7 +226,7 @@ function Home() {
           {allProjects.length === 0 && (
             <span className="font-light italic text-md text-dark">
               No projects yet.{" "}
-              <Link to="create-project" className="text-khaki font-semibold">
+              <Link to="/create-project" className="text-khaki font-semibold">
                 Create Your First Project
               </Link>.
             </span>
@@ -310,7 +315,7 @@ function Home() {
                       </span>
                     </div>
                     <div className="col-span-4 flex p-2 items-center">
-                      <div class="w-full bg-gray-200 rounded h-2 text-center">
+                      <div className="w-full bg-gray-200 rounded h-2 text-center">
                         <div
                           className={`${
                             bgColors[project.project_status]
@@ -355,12 +360,20 @@ function Home() {
               with the site. I appreciate any and all suggestions for DevCheck!
             </span>
           </div>
+          {issueSuccess && (
+            <p className="text-green font-semibold text-center mb-2">
+              {issueSuccess}
+            </p>
+          )}
           <div className="flex my-5 gap-x-3 justify-center items-center">
             <textarea
               className="border-green border border-dashed rounded-lg resize-none bg-white w-full text-dark p-3"
               placeholder="Submit an Issue here..."
               value={issue}
-              onChange={(e) => setIssue(e.target.value)}
+              onChange={(e) => {
+                setIssue(e.target.value);
+                setIssueSuccess("");
+              }}
               disabled={loading}
             />
             <button

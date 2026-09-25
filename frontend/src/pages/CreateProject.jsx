@@ -88,15 +88,12 @@ export default function CreateProject() {
         });
       }
 
-      console.log("Project, pages, and sections all created successfully.");
       navigate(`/projects/${projectId}`, {
         state: { message: "Project created successfully!" },
       });
     } catch (err) {
-      console.error(err);
       if (err.response?.data) {
         setErrors(err.response.data);
-        console.log("Validation errors:", err.response.data);
       }
     }
   };

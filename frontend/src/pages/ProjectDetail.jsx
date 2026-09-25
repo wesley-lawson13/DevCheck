@@ -4,6 +4,7 @@ import ConfirmModal from "../components/ConfirmModal";
 import SectionColumn from "../components/SectionColumn";
 import * as projectsApi from "../services/projects";
 import { SECTION_COLUMNS, STATUS_BG, STATUS_CODES, STATUS_LABELS } from "../constants";
+import { getErrorMessage } from "../utils/errors";
 import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
@@ -22,24 +23,18 @@ export default function ProjectDetail() {
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
   const [statusToSet, setStatusToSet] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const projectCreated = location.state?.message;
 
   // returns full project tree w/ associated pages, sections, tasks, etc.
   const getProject = async () => {
     try {
-      console.log("Fetching project with ID:", projectId);
       const res = await projectsApi.getProjectDetail(projectId);
-      console.log("Project fetched successfully");
       setProject(res.data);
       setPages(res.data.pages);
       setProjectStatus(res.data.project_status);
-      console.log(res.data);
     } catch (err) {
-      console.error("Failed to fetch project:", err);
-      console.error("Error status:", err.response?.status);
-      console.error("Error data:", err.response?.data);
-
-      alert("Failed to fetch project details");
+      setErrorMessage(getErrorMessage(err, "Failed to fetch project details."));
     }
   };
 
@@ -67,39 +62,18 @@ export default function ProjectDetail() {
       if (res.status !== 200) {
         getProject();
       }
-    } catch (err) {
-      console.error("Failed to toggle task:", err);
+    } catch {
       getProject();
     }
   };
 
   const addTask = async (sectionId, title, key) => {
-    console.log("Adding task with key:", key);
-    console.log("Section ID:", sectionId);
-    console.log("Current addingTask state:", addingTask);
-    console.log("Current newTaskTitle state:", newTaskTitle);
-
     try {
       const res = await projectsApi.createTask(sectionId, title);
 
-      console.log("Task created successfully, status:", res.status);
-
       if (res.status === 200 || res.status === 201) {
-        setNewTaskTitle((prev) => {
-          const updated = { ...prev, [key]: "" };
-          console.log(
-            "Clearing newTaskTitle for key:",
-            key,
-            "Updated state:",
-            updated,
-          );
-          return updated;
-        });
-        setAddingTask((prev) => {
-          const updated = { ...prev, [key]: false };
-          console.log("Hiding form for key:", key, "Updated state:", updated);
-          return updated;
-        });
+        setNewTaskTitle((prev) => ({ ...prev, [key]: "" }));
+        setAddingTask((prev) => ({ ...prev, [key]: false }));
 
         // Refresh data after a small delay to allow state to update
         setTimeout(async () => {
@@ -107,9 +81,7 @@ export default function ProjectDetail() {
         }, 50);
       }
     } catch (err) {
-      console.error("Failed to add task:", err);
-      console.error("Error details:", err.response);
-      alert("Failed to add task.");
+      setErrorMessage(getErrorMessage(err, "Failed to add task."));
     }
   };
 
@@ -126,15 +98,12 @@ export default function ProjectDetail() {
 
     try {
       const res = await projectsApi.deleteTask(taskId);
-      console.log("Task deleted successfully: ", res.status);
 
-      if (res.status === 200 || res.status === 201) {
+      if (res.status === 200 || res.status === 204) {
         getProject();
       }
     } catch (err) {
-      console.error("Failed to delete task:", err);
-      console.error("Error details: ", err.response);
-      alert("Failed to delete task.");
+      setErrorMessage(getErrorMessage(err, "Failed to delete task."));
 
       getProject();
     }
@@ -151,8 +120,7 @@ export default function ProjectDetail() {
         setNewPageTitle("");
       }
     } catch (err) {
-      console.error("Failed to create new page:", err);
-      alert("Failed to create new page.");
+      setErrorMessage(getErrorMessage(err, "Failed to create new page."));
     }
   };
 
@@ -162,21 +130,19 @@ export default function ProjectDetail() {
       setPages((prev) => prev.filter((p) => p.id !== pageId));
       setShowDeleteModal(false);
 
-      if (res.status === 200 || res.status === 201) {
-        setSuccessMessage("Page deleted successfully."); // currently not working
+      if (res.status === 200 || res.status === 204) {
+        setSuccessMessage("Page deleted successfully.");
         setShowDeleteModal(false);
         setPageToDelete(null);
         await getProject();
       }
     } catch (err) {
-      console.error("Failed to delete page:", err);
-      alert("Failed to delete page.");
+      setErrorMessage(getErrorMessage(err, "Failed to delete page."));
     }
   };
 
   const handleAddClick = (pageId, sectionTitle, sectionId) => {
     const key = `${sectionId || `${pageId}-${sectionTitle}`}`;
-    console.log("Opening add form with key:", key);
     setAddingTask((prev) => ({ ...prev, [key]: true }));
   };
 
@@ -193,10 +159,6 @@ export default function ProjectDetail() {
   const handleSubmitTask = async (pageId, sectionTitle, sectionId) => {
     const key = `${sectionId || `${pageId}-${sectionTitle}`}`;
     const title = newTaskTitle[key]?.trim();
-
-    console.log("Submitting task with key:", key);
-    console.log("Title:", title);
-    console.log("Section ID:", sectionId);
 
     if (!title) return;
 
@@ -216,7 +178,7 @@ export default function ProjectDetail() {
   const handleNewPageSubmit = () => {
     const title = newPageTitle.trim();
     if (!title) {
-      alert("Please enter a page name");
+      setErrorMessage("Please enter a page name.");
       return;
     }
     addNewPage(title);
@@ -239,8 +201,7 @@ export default function ProjectDetail() {
         await getProject();
       }
     } catch (err) {
-      console.error("Failed to update status:", err);
-      alert("Failed to update status.");
+      setErrorMessage(getErrorMessage(err, "Failed to update status."));
     }
   };
 
@@ -249,20 +210,8 @@ export default function ProjectDetail() {
   }, [projectId]);
 
   useEffect(() => {
-    projectsApi
-      .markProjectViewed(projectId)
-      .catch((err) => console.error("Failed to mark project viewed:", err));
+    projectsApi.markProjectViewed(projectId).catch(() => {});
   }, [projectId]);
-
-  // Debug: Log the structure to console
-  useEffect(() => {
-    if (pages) {
-      console.log("Pages structure:", pages);
-      pages.forEach((page, i) => {
-        console.log(`Page ${i} (${page.name}):`, page.sections);
-      });
-    }
-  }, [pages]);
 
   useEffect(() => {
     if (projectCreated) {
@@ -280,6 +229,15 @@ export default function ProjectDetail() {
         <div className="flex justify-between w-full bg-green/60 border border-green text-white px-4 py-3 rounded mb-5">
           {successMessage}
           <button className="text-muted" onClick={() => setSuccessMessage("")}>
+            &times;
+          </button>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="flex justify-between w-full bg-red-500/60 border border-red-500 text-white px-4 py-3 rounded mb-5">
+          {errorMessage}
+          <button className="text-muted" onClick={() => setErrorMessage("")}>
             &times;
           </button>
         </div>
@@ -397,7 +355,7 @@ export default function ProjectDetail() {
                   placeholder="Enter page name..."
                   value={newPageTitle}
                   onChange={(e) => setNewPageTitle(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleNewPageSubmit();
                     }

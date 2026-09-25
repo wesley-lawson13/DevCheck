@@ -76,7 +76,7 @@ export default function SectionColumn({
               placeholder="New task..."
               value={newTaskTitle[key] || ""}
               onChange={(e) => onChangeNewTaskTitle(key, e.target.value)}
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   onSubmitTask(page.id, code, section?.id);
                 }

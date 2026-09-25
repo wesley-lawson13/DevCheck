@@ -197,10 +197,8 @@ describe('ProjectDetail', () => {
       expect(screen.queryByText('Delete Page?')).not.toBeInTheDocument()
     })
 
-    // KNOWN BUG B11: the code checks for 200/201 but DELETE returns 204, so the message never
-    // shows. `test.fails` keeps the suite green while documenting it; when 4.6 fixes the status
-    // check this starts failing, which is the cue to change it to a plain `test`.
-    test.fails('shows "Page deleted successfully." (B11, fixed in 4.6)', async () => {
+    // B11, fixed in 4.6: the code now checks for 204 (what DELETE actually returns).
+    test('shows "Page deleted successfully."', async () => {
       const user = userEvent.setup()
       await deleteHomePage(user)
 

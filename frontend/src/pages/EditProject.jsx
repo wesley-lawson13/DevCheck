@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
+import { getErrorMessage } from "../utils/errors";
 
 export default function EditProject() {
   const [loading, setLoading] = useState(true);
@@ -43,7 +44,7 @@ export default function EditProject() {
           setInitialThumbnail(res.data.image);
         }
       } catch (err) {
-        setError(err.message);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -51,8 +52,6 @@ export default function EditProject() {
 
     if (projectId) fetchProject();
   }, [projectId]);
-
-  console.log("EditProject projectId:", projectId);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -135,8 +134,7 @@ export default function EditProject() {
         }
       }
     } catch (err) {
-      setError(err.message);
-      console.error("Error saving project:", err.response?.data || err);
+      setError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }

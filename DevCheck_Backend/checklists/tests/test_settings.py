@@ -73,3 +73,20 @@ def test_missing_secret_key_is_tolerated_in_debug(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "")
     conf = load_settings(monkeypatch, cloudinary=False, debug=True)
     assert conf["SECRET_KEY"] == "unsafe-dev-key"
+
+
+def test_exception_handler_is_configured(monkeypatch):
+    conf = load_settings(monkeypatch, cloudinary=False, debug=True)
+    assert conf["REST_FRAMEWORK"]["EXCEPTION_HANDLER"] == "checklists.exceptions.exception_handler"
+
+
+def test_logging_level_defaults_to_info(monkeypatch):
+    monkeypatch.delenv("LOG_LEVEL", raising=False)
+    conf = load_settings(monkeypatch, cloudinary=False, debug=True)
+    assert conf["LOGGING"]["root"]["level"] == "INFO"
+
+
+def test_logging_level_is_configurable(monkeypatch):
+    monkeypatch.setenv("LOG_LEVEL", "DEBUG")
+    conf = load_settings(monkeypatch, cloudinary=False, debug=True)
+    assert conf["LOGGING"]["root"]["level"] == "DEBUG"
