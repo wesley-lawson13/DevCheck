@@ -9,7 +9,6 @@ function Home() {
   const [projects, setProjects] = useState([]);
   const [user, setUser] = useState(null);
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [projectTasks, setProjectTasks] = useState({}); // New state to store tasks by project ID
   const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
 
@@ -20,12 +19,6 @@ function Home() {
   useEffect(() => {
     fetchUser();
   }, []);
-
-  useEffect(() => {
-    if (projects.length > 0) {
-      fetchAllProjectDetails();
-    }
-  }, [projects]);
 
   const location = useLocation();
 
@@ -66,67 +59,6 @@ function Home() {
       .catch((err) => alert(err));
   };
 
-  const getProjectDetail = async (projectId) => {
-    try {
-      const res = await api.get(`/checklists/projects/${projectId}/detail/`);
-
-      if (res.status === 200 || res.status === 201) {
-        console.log(`Project detail for ${projectId}:`, res.data);
-        return res.data;
-      }
-      return null;
-    } catch (err) {
-      console.error(`Error fetching project detail for ${projectId}:`, err);
-      return null;
-    }
-  };
-
-  // New function to fetch details for all projects and count tasks
-  const fetchAllProjectDetails = async () => {
-    const tasksMap = {};
-
-    for (const project of projects) {
-      const detail = await getProjectDetail(project.id);
-
-      if (detail) {
-        // Count all tasks across all pages and sections
-        let taskCount = 0;
-        let completedCount = 0;
-
-        if (detail.pages) {
-          detail.pages.forEach((page) => {
-            if (page.sections) {
-              page.sections.forEach((section) => {
-                if (section.tasks) {
-                  taskCount += section.tasks.length;
-
-                  const completedTasks = section.tasks.filter(
-                    (task) => task.completed === true,
-                  );
-                  completedCount += completedTasks.length;
-                }
-              });
-            }
-          });
-        }
-
-        console.log(
-          `Project "${project.name}" (ID: ${project.id}): ${taskCount} total tasks, ${completedCount} completed`,
-        );
-        tasksMap[project.id] = {
-          completed: completedCount,
-          total: taskCount,
-          detail,
-        };
-      } else {
-        tasksMap[project.id] = { completed: 0, count: 0, detail: null };
-      }
-    }
-
-    console.log("Final tasksMap:", tasksMap);
-    setProjectTasks(tasksMap);
-  };
-
   // Most recently viewed first; projects never opened sort after those that have
   // been, then fall back to creation order among themselves.
   const byRecency = (a, b) => {
@@ -158,10 +90,10 @@ function Home() {
   };
 
   function calculateProgress(project) {
-    const completed = projectTasks[project.id]?.completed ?? 0;
-    const total = projectTasks[project.id]?.total ?? 0;
+    const completed = project.task_completed ?? 0;
+    const total = project.task_total ?? 0;
 
-    if (projectTasks[project.id]?.total === 0) {
+    if (total === 0) {
       return "0%";
     }
 
@@ -319,14 +251,13 @@ function Home() {
                     >
                       {STATUS_LABELS[project.project_status]}
                     </span>
-                    {projectTasks[project.id]?.total > 0 ? (
+                    {project.task_total > 0 ? (
                       <span
                         className={`font-bold text-md ${
                           txtColors[project.project_status]
                         } mx-2 self-center`}
                       >
-                        {projectTasks[project.id]?.completed} /{" "}
-                        {projectTasks[project.id]?.total}{" "}
+                        {project.task_completed} / {project.task_total}{" "}
                         <span className="text-sm italic">completed.</span>
                       </span>
                     ) : (
@@ -367,14 +298,13 @@ function Home() {
                     >
                       {STATUS_LABELS[project.project_status]}
                     </span>
-                    {projectTasks[project.id]?.total > 0 ? (
+                    {project.task_total > 0 ? (
                       <span
                         className={`font-bold text-md ${
                           txtColors[project.project_status]
                         } mx-2 self-center`}
                       >
-                        {projectTasks[project.id]?.completed} /{" "}
-                        {projectTasks[project.id]?.total}{" "}
+                        {project.task_completed} / {project.task_total}{" "}
                         <span className="text-sm italic">completed.</span>
                       </span>
                     ) : (

@@ -61,6 +61,24 @@ def test_list_shows_only_own_projects(api_client, user, other_user):
     assert sorted(p["name"] for p in rows(res)) == ["mine-1", "mine-2"]
 
 
+def test_list_annotates_task_totals(api_client, user, project_tree):
+    from checklists.models import Task
+
+    project, _, sections, tasks = project_tree(user)
+    empty_project = Project.objects.create(owner=user, name="empty", description="d")
+    tasks["MVP"].completed = True
+    tasks["MVP"].save()
+    Task.objects.create(section=sections["DEV"], title="extra", completed=True)
+
+    res = api_client.get(LIST_URL)
+    assert res.status_code == 200
+    by_name = {p["name"]: p for p in rows(res)}
+    assert by_name[project.name]["task_total"] == 4
+    assert by_name[project.name]["task_completed"] == 2
+    assert by_name["empty"]["task_total"] == 0
+    assert by_name["empty"]["task_completed"] == 0
+
+
 def test_create_assigns_the_caller_as_owner(api_client, user, other_user):
     res = api_client.post(
         LIST_URL, {"name": "P", "description": "d", "owner": other_user.id}, format="json"

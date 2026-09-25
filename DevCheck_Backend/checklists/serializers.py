@@ -140,6 +140,11 @@ class PageSerializer(serializers.ModelSerializer):
         return page
 
 class ProjectSerializer(ProjectImageMixin, serializers.ModelSerializer):
+    # Annotated by the list view's queryset; absent (and simply omitted from output) on a
+    # freshly created instance, which is fine since the create response doesn't need them.
+    task_total = serializers.IntegerField(read_only=True)
+    task_completed = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Project
         fields = '__all__'

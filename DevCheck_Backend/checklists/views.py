@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
@@ -30,7 +31,14 @@ class ProjectListCreate(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Project.objects.filter(owner=user)
+        return Project.objects.filter(owner=user).annotate(
+            task_total=Count('pages__sections__tasks', distinct=True),
+            task_completed=Count(
+                'pages__sections__tasks',
+                filter=Q(pages__sections__tasks__completed=True),
+                distinct=True,
+            ),
+        )
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
