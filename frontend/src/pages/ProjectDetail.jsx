@@ -145,38 +145,18 @@ export default function ProjectDetail() {
 
   const addNewPage = async (pageName) => {
     try {
-      console.log("Creating new page:", pageName);
-
-      // Create the page
+      // The backend creates the page and its three sections atomically.
       const res = await api.post(`checklists/projects/${projectId}/pages/`, {
         name: pageName,
       });
 
       if (res.status === 200 || res.status === 201) {
-        console.log("Page created successfully:", res.data);
-        const newPageId = res.data.id;
-
-        // Create the three sections for this page
-        const sectionTitles = ["MVP", "DEV", "DEPLOY"];
-        const sectionPromises = sectionTitles.map((title) =>
-          api.post(`checklists/projects/${newPageId}/sections/`, {
-            title: title,
-          }),
-        );
-
-        await Promise.all(sectionPromises);
-        console.log("All sections created successfully");
-
-        // Refresh the project data
         await getProject();
-
-        // Reset the new page state
         setCreatingNewPage(false);
         setNewPageTitle("");
       }
     } catch (err) {
       console.error("Failed to create new page:", err);
-      console.error("Error details:", err.response);
       alert("Failed to create new page.");
     }
   };

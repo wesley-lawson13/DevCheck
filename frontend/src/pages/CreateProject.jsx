@@ -82,26 +82,10 @@ export default function CreateProject() {
       const projectId = res.data.id;
 
       if ((res.status === 200 || res.status === 201) && pages.length > 0) {
-        // add pages
-        for (const page of pages) {
-          const pageRes = await api.post(
-            `checklists/projects/${projectId}/pages/`,
-            {
-              name: page.name,
-            }
-          );
-
-          const newPageId = pageRes.data.id;
-
-          // Create the three sections for this page
-          const sectionTitles = ["MVP", "DEV", "DEPLOY"];
-          const sectionPromises = sectionTitles.map((title) =>
-            api.post(`checklists/projects/${newPageId}/sections/`, {
-              title: title,
-            })
-          );
-          await Promise.all(sectionPromises);
-        }
+        // Backend creates every page, its sections and its tasks atomically.
+        await api.post(`checklists/projects/${projectId}/tree/`, {
+          pages: pages.map((page) => ({ name: page.name })),
+        });
       }
 
       console.log("Project, pages, and sections all created successfully.");

@@ -29,6 +29,7 @@ DETAIL_CASES = [
     ),
     ("project-delete", "delete", "/checklists/projects/delete/{project}/", None),
     ("project-viewed", "post", "/checklists/projects/{project}/viewed/", None),
+    ("project-tree-create", "post", "/checklists/projects/{project}/tree/", {"pages": [{"name": "pwned"}]}),
     ("page-get", "get", "/checklists/pages/{page}/", None),
     ("page-patch", "patch", "/checklists/pages/{page}/", {"name": "pwned"}),
     ("page-put", "put", "/checklists/pages/{page}/", {"name": "pwned", "order": 3}),

@@ -126,9 +126,7 @@ describe('CreateProject', () => {
     expect(screen.queryByText('Created project page')).not.toBeInTheDocument()
   })
 
-  test('queued pages are created after the project, each with its three sections', async () => {
-    // Current client-orchestrated behaviour (B8). Item 4.1 replaces this with one `tree`
-    // request and should rewrite this test to match.
+  test('queued pages are sent as a single tree request after the project is created (4.1, B8)', async () => {
     const user = userEvent.setup()
     const calls = []
     server.use(
@@ -136,13 +134,9 @@ describe('CreateProject', () => {
         calls.push('project')
         return HttpResponse.json({ id: 7 }, { status: 201 })
       }),
-      http.post(`${API}/checklists/projects/7/pages/`, async ({ request }) => {
-        calls.push(`page:${(await request.json()).name}`)
-        return HttpResponse.json({ id: 70 }, { status: 201 })
-      }),
-      http.post(`${API}/checklists/projects/70/sections/`, async ({ request }) => {
-        calls.push(`section:${(await request.json()).title}`)
-        return HttpResponse.json({}, { status: 201 })
+      http.post(`${API}/checklists/projects/7/tree/`, async ({ request }) => {
+        calls.push(['tree', await request.json()])
+        return HttpResponse.json([{ id: 70, name: 'Landing', sections: [] }], { status: 201 })
       }),
     )
     renderCreate()
@@ -155,8 +149,8 @@ describe('CreateProject', () => {
     await user.click(screen.getByRole('button', { name: 'Create Project' }))
 
     await screen.findByText('Created project page')
-    await waitFor(() => expect(calls).toHaveLength(5))
-    expect(calls.slice(0, 2)).toEqual(['project', 'page:Landing'])
-    expect(calls.slice(2).sort()).toEqual(['section:DEPLOY', 'section:DEV', 'section:MVP'])
+    await waitFor(() => expect(calls).toHaveLength(2))
+    expect(calls[0]).toBe('project')
+    expect(calls[1]).toEqual(['tree', { pages: [{ name: 'Landing' }] }])
   })
 })

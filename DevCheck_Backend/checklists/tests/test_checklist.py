@@ -24,6 +24,15 @@ def test_create_and_list_pages(api_client, user, project_tree):
     assert sorted(p["name"] for p in rows(listing)) == ["About", "Home"]
 
 
+def test_creating_a_page_atomically_creates_its_three_sections(api_client, user, project_tree):
+    project, *_ = project_tree(user)
+    res = api_client.post(PAGES.format(project.id), {"name": "About"}, format="json")
+    assert res.status_code == 201, res.data
+    assert [s["title"] for s in res.data["sections"]] == ["MVP", "DEV", "DEPLOY"]
+    page = Page.objects.get(name="About")
+    assert list(page.sections.values_list("title", flat=True)) == ["MVP", "DEV", "DEPLOY"]
+
+
 def test_create_page_requires_a_name(api_client, user, project_tree):
     project, *_ = project_tree(user)
     assert api_client.post(PAGES.format(project.id), {}, format="json").status_code == 400

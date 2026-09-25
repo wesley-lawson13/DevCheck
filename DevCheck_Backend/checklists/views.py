@@ -84,6 +84,20 @@ class PageDetail(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return Page.objects.filter(project__owner=self.request.user)
 
+class ProjectTreeCreateView(generics.GenericAPIView):
+    """Atomically creates one or more pages (with sections and starter tasks) on a project."""
+
+    serializer_class = ProjectTreeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, id=kwargs['pk'], owner=request.user)
+        serializer = self.get_serializer(data=request.data, context={**self.get_serializer_context(), 'project': project})
+        serializer.is_valid(raise_exception=True)
+        pages = serializer.save()
+        response_serializer = PageSerializer(pages, many=True, context=self.get_serializer_context())
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
 class ChecklistSectionListCreate(generics.ListCreateAPIView):
     serializer_class = ChecklistSectionSerializer
     permission_classes = [IsAuthenticated]

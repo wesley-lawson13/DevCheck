@@ -1,6 +1,7 @@
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import Project, Page, ChecklistSection, Task, Issue
@@ -99,23 +100,6 @@ class ChecklistSectionSerializer(serializers.ModelSerializer):
             validated_data['order'] = ChecklistSection.SECTION_ORDER.get(validated_data['title'], instance.order)
         return super().update(instance, validated_data)
 
-class PageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Page
-        fields = '__all__'
-        extra_kwargs = {
-            'order': {'required': False},
-            'project': {'read_only': True} 
-        }
-
-class ProjectSerializer(ProjectImageMixin, serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = '__all__'
-        extra_kwargs = {
-            'owner': {'read_only': True},
-        }
-
 class ChecklistTaskNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
@@ -129,6 +113,39 @@ class ChecklistSectionNestedSerializer(serializers.ModelSerializer):
         model = ChecklistSection
         fields = ['id', 'title', 'tasks']
 
+
+def create_default_sections(page):
+    """Every page gets one MVP, one DEV and one DEPLOY section, in that order."""
+    ChecklistSection.objects.bulk_create(
+        ChecklistSection(page=page, title=title, order=order)
+        for title, order in ChecklistSection.SECTION_ORDER.items()
+    )
+
+
+class PageSerializer(serializers.ModelSerializer):
+    sections = ChecklistSectionNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Page
+        fields = ['id', 'project', 'name', 'order', 'sections']
+        extra_kwargs = {
+            'order': {'required': False},
+            'project': {'read_only': True},
+        }
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            page = super().create(validated_data)
+            create_default_sections(page)
+        return page
+
+class ProjectSerializer(ProjectImageMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = '__all__'
+        extra_kwargs = {
+            'owner': {'read_only': True},
+        }
 
 class PageNestedSerializer(serializers.ModelSerializer):
     sections = ChecklistSectionNestedSerializer(many=True, read_only=True)
@@ -144,6 +161,50 @@ class ProjectDetailSerializer(ProjectImageMixin, serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'description', 'link', 'pages', 'project_status', 'image']
+
+class TreePageSerializer(serializers.Serializer):
+    """One page within a tree-create payload: a name plus tasks grouped by section."""
+
+    name = serializers.CharField(max_length=100)
+    tasks = serializers.DictField(
+        child=serializers.ListField(child=serializers.CharField(max_length=200, allow_blank=False)),
+        required=False,
+        default=dict,
+    )
+
+    def validate_tasks(self, value):
+        unknown = set(value) - set(ChecklistSection.SECTION_ORDER)
+        if unknown:
+            raise serializers.ValidationError(
+                f"Unknown section(s): {', '.join(sorted(unknown))}. Use MVP, DEV or DEPLOY."
+            )
+        return value
+
+
+class ProjectTreeSerializer(serializers.Serializer):
+    """Atomically creates one or more pages, each with its 3 sections and starter tasks.
+
+    This is the endpoint the future LLM capture layer (concept -> checklist items) calls.
+    """
+
+    pages = TreePageSerializer(many=True, allow_empty=False)
+
+    def create(self, validated_data):
+        project = self.context['project']
+        pages = []
+        with transaction.atomic():
+            for page_data in validated_data['pages']:
+                page = Page.objects.create(project=project, name=page_data['name'])
+                create_default_sections(page)
+                sections_by_title = {s.title: s for s in page.sections.all()}
+                for title, task_titles in page_data['tasks'].items():
+                    section = sections_by_title[title]
+                    Task.objects.bulk_create(
+                        Task(section=section, title=t, order=i) for i, t in enumerate(task_titles)
+                    )
+                pages.append(page)
+        return pages
+
 
 class IssueSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.id")

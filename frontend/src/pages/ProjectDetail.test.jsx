@@ -230,19 +230,25 @@ describe('ProjectDetail', () => {
     expect(patch.body).toEqual({ project_status: 'DEV' })
   })
 
-  test('adding a page posts the page, then its three sections', async () => {
-    // Current client-orchestrated behaviour (B8). Item 4.1 moves this server-side and
-    // should rewrite this test to expect a single request.
+  test('adding a page sends a single request; the backend creates its sections (4.1, B8)', async () => {
     const user = userEvent.setup()
-    const calls = []
+    let postBody
     server.use(
       http.post(`${API}/checklists/projects/1/pages/`, async ({ request }) => {
-        calls.push(['page', await request.json()])
-        return HttpResponse.json({ id: 11, name: 'About', project: 1 }, { status: 201 })
-      }),
-      http.post(`${API}/checklists/projects/11/sections/`, async ({ request }) => {
-        calls.push(['section', (await request.json()).title])
-        return HttpResponse.json({}, { status: 201 })
+        postBody = await request.json()
+        tree.pages.push({
+          id: 11,
+          name: 'About',
+          sections: [
+            { id: 110, title: 'MVP', tasks: [] },
+            { id: 111, title: 'DEV', tasks: [] },
+            { id: 112, title: 'DEPLOY', tasks: [] },
+          ],
+        })
+        return HttpResponse.json(
+          { id: 11, project: 1, name: 'About', order: 0, sections: tree.pages[1].sections },
+          { status: 201 },
+        )
       }),
     )
     renderDetail()
@@ -252,8 +258,7 @@ describe('ProjectDetail', () => {
     await user.type(screen.getByPlaceholderText('Enter page name...'), 'About')
     await user.click(screen.getByRole('button', { name: 'Create Page' }))
 
-    await waitFor(() => expect(calls).toHaveLength(4))
-    expect(calls[0]).toEqual(['page', { name: 'About' }])
-    expect(calls.slice(1).map((c) => c[1]).sort()).toEqual(['DEPLOY', 'DEV', 'MVP'])
+    expect(await screen.findByText('About')).toBeInTheDocument()
+    expect(postBody).toEqual({ name: 'About' })
   })
 })
