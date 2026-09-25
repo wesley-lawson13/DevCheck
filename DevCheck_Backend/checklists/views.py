@@ -2,9 +2,10 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.response import Response
 from .serializers import * 
 from .models import Project, Page, ChecklistSection, Task, Issue
 
@@ -51,12 +52,17 @@ class ProjectDetailView(generics.RetrieveUpdateAPIView):
     def get_queryset(self):
         return Project.objects.filter(owner=self.request.user).prefetch_related('pages__sections__tasks')
 
-    def get_object(self):
-        project = super().get_object()
-        if self.request.method == "GET" and not self.request.query_params.get('dashboard'):
-            project.updated_at = timezone.now()
-            project.save(update_fields=['updated_at'])
-        return project
+class ProjectViewedView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(owner=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object()
+        project.last_viewed_at = timezone.now()
+        project.save(update_fields=['last_viewed_at'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class PageListCreate(generics.ListCreateAPIView):
     serializer_class = PageSerializer

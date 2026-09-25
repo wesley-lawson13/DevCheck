@@ -1,8 +1,8 @@
 """Query-count guards and measurements for the project detail (dashboard) endpoint.
 
-The dashboard calls GET /projects/<id>/detail/?dashboard=true once per project. That
-response nests pages -> sections -> tasks, which is an N+1 trap: without
-prefetch_related, every page costs a sections query and every section a tasks query.
+The dashboard calls GET /projects/<id>/detail/ once per project. That response nests
+pages -> sections -> tasks, which is an N+1 trap: without prefetch_related, every page
+costs a sections query and every section a tasks query.
 
 Run `pytest checklists/tests/test_query_counts.py -s` to print the comparison table.
 """
@@ -19,7 +19,7 @@ TASKS_PER_SECTION = 5
 
 
 def detail_url(project):
-    return f"/checklists/projects/{project.id}/detail/?dashboard=true"
+    return f"/checklists/projects/{project.id}/detail/"
 
 
 def build_project(owner, pages, name="Bench"):
@@ -80,7 +80,7 @@ def test_report_n_plus_one_savings(api_client, user, capsys):
 
     lines = [
         "",
-        "Queries per GET /projects/<id>/detail/?dashboard=true",
+        "Queries per GET /projects/<id>/detail/",
         f"({len(SECTION_TITLES)} sections/page, {TASKS_PER_SECTION} tasks/section)",
         f"{'pages':>6} {'tasks':>6} {'no prefetch':>12} {'prefetch':>9} {'reduction':>10}",
     ]

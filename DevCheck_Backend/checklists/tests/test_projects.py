@@ -131,3 +131,26 @@ def test_detail_returns_the_nested_tree(api_client, user, project_tree):
     assert sorted(s["title"] for s in page["sections"]) == ["DEPLOY", "DEV", "MVP"]
     assert all(len(s["tasks"]) == 1 for s in page["sections"])
     assert set(page["sections"][0]["tasks"][0]) == {"id", "title", "completed"}
+
+
+def test_viewing_the_detail_does_not_update_last_viewed_at(api_client, user):
+    project = Project.objects.create(owner=user, name="P", description="d")
+    api_client.get(detail_url(project))
+    project.refresh_from_db()
+    assert project.last_viewed_at is None
+
+
+def test_viewed_endpoint_sets_last_viewed_at(api_client, user):
+    project = Project.objects.create(owner=user, name="P", description="d")
+    res = api_client.post(f"/checklists/projects/{project.id}/viewed/")
+    assert res.status_code == 204
+    project.refresh_from_db()
+    assert project.last_viewed_at is not None
+
+
+def test_viewed_endpoint_is_scoped_to_the_owner(api_client, other_user):
+    project = Project.objects.create(owner=other_user, name="P", description="d")
+    res = api_client.post(f"/checklists/projects/{project.id}/viewed/")
+    assert res.status_code == 404
+    project.refresh_from_db()
+    assert project.last_viewed_at is None

@@ -68,9 +68,7 @@ function Home() {
 
   const getProjectDetail = async (projectId) => {
     try {
-      const res = await api.get(
-        `/checklists/projects/${projectId}/detail/?dashboard=true`,
-      );
+      const res = await api.get(`/checklists/projects/${projectId}/detail/`);
 
       if (res.status === 200 || res.status === 201) {
         console.log(`Project detail for ${projectId}:`, res.data);
@@ -129,18 +127,26 @@ function Home() {
     setProjectTasks(tasksMap);
   };
 
+  // Most recently viewed first; projects never opened sort after those that have
+  // been, then fall back to creation order among themselves.
+  const byRecency = (a, b) => {
+    if (a.last_viewed_at && b.last_viewed_at) {
+      return new Date(b.last_viewed_at) - new Date(a.last_viewed_at);
+    }
+    if (a.last_viewed_at || b.last_viewed_at) {
+      return a.last_viewed_at ? -1 : 1;
+    }
+    return new Date(b.created_at) - new Date(a.created_at);
+  };
+
   const getTopThreeRecentlyEdited = (projects) => {
     if (!projects) return [];
 
-    return [...projects]
-      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-      .slice(0, 3);
+    return [...projects].sort(byRecency).slice(0, 3);
   };
 
   const sortedProjects = (projects) => {
-    return [...projects].sort(
-      (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
-    );
+    return [...projects].sort(byRecency);
   };
 
   const expandProjectsSection = async () => {

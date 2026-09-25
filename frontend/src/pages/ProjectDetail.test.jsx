@@ -39,6 +39,7 @@ function serveTree() {
       detailGets++
       return HttpResponse.json(structuredClone(tree))
     }),
+    http.post(`${API}/checklists/projects/1/viewed/`, () => new HttpResponse(null, { status: 204 })),
   )
 }
 

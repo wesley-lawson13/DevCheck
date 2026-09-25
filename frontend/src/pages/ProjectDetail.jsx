@@ -271,6 +271,12 @@ export default function ProjectDetail() {
     getProject();
   }, [projectId]);
 
+  useEffect(() => {
+    api
+      .post(`/checklists/projects/${projectId}/viewed/`)
+      .catch((err) => console.error("Failed to mark project viewed:", err));
+  }, [projectId]);
+
   // Debug: Log the structure to console
   useEffect(() => {
     if (pages) {
