@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
-import api from "../api";
-import { STATUS_BG, STATUS_CODES, STATUS_LABELS } from "../constants";
+import ConfirmModal from "../components/ConfirmModal";
+import SectionColumn from "../components/SectionColumn";
+import * as projectsApi from "../services/projects";
+import { SECTION_COLUMNS, STATUS_BG, STATUS_CODES, STATUS_LABELS } from "../constants";
 import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
@@ -26,7 +28,7 @@ export default function ProjectDetail() {
   const getProject = async () => {
     try {
       console.log("Fetching project with ID:", projectId);
-      const res = await api.get(`/checklists/projects/${projectId}/detail/`);
+      const res = await projectsApi.getProjectDetail(projectId);
       console.log("Project fetched successfully");
       setProject(res.data);
       setPages(res.data.pages);
@@ -60,9 +62,7 @@ export default function ProjectDetail() {
     );
 
     try {
-      const res = await api.patch(`/checklists/tasks/${taskId}/`, {
-        completed: !currentCompleted,
-      });
+      const res = await projectsApi.setTaskCompleted(taskId, !currentCompleted);
 
       if (res.status !== 200) {
         getProject();
@@ -80,10 +80,7 @@ export default function ProjectDetail() {
     console.log("Current newTaskTitle state:", newTaskTitle);
 
     try {
-      const res = await api.post(`/checklists/sections/${sectionId}/tasks/`, {
-        title,
-        completed: false,
-      });
+      const res = await projectsApi.createTask(sectionId, title);
 
       console.log("Task created successfully, status:", res.status);
 
@@ -128,7 +125,7 @@ export default function ProjectDetail() {
     );
 
     try {
-      const res = await api.delete(`checklists/tasks/${taskId}/`);
+      const res = await projectsApi.deleteTask(taskId);
       console.log("Task deleted successfully: ", res.status);
 
       if (res.status === 200 || res.status === 201) {
@@ -146,9 +143,7 @@ export default function ProjectDetail() {
   const addNewPage = async (pageName) => {
     try {
       // The backend creates the page and its three sections atomically.
-      const res = await api.post(`checklists/projects/${projectId}/pages/`, {
-        name: pageName,
-      });
+      const res = await projectsApi.createPage(projectId, pageName);
 
       if (res.status === 200 || res.status === 201) {
         await getProject();
@@ -163,7 +158,7 @@ export default function ProjectDetail() {
 
   const deletePage = async (pageId) => {
     try {
-      const res = await api.delete(`checklists/pages/${pageId}/`);
+      const res = await projectsApi.deletePage(pageId);
       setPages((prev) => prev.filter((p) => p.id !== pageId));
       setShowDeleteModal(false);
 
@@ -189,6 +184,10 @@ export default function ProjectDetail() {
     const key = `${sectionId || `${pageId}-${sectionTitle}`}`;
     setAddingTask((prev) => ({ ...prev, [key]: false }));
     setNewTaskTitle((prev) => ({ ...prev, [key]: "" }));
+  };
+
+  const handleNewTaskTitleChange = (key, value) => {
+    setNewTaskTitle((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmitTask = async (pageId, sectionTitle, sectionId) => {
@@ -230,9 +229,7 @@ export default function ProjectDetail() {
 
   const updateStatus = async (newStatus) => {
     try {
-      const res = await api.patch(`/checklists/projects/${projectId}/detail/`, {
-        project_status: newStatus,
-      });
+      const res = await projectsApi.updateProjectStatus(projectId, newStatus);
 
       if (res.status === 200 || res.status === 201) {
         setProjectStatus(newStatus);
@@ -252,8 +249,8 @@ export default function ProjectDetail() {
   }, [projectId]);
 
   useEffect(() => {
-    api
-      .post(`/checklists/projects/${projectId}/viewed/`)
+    projectsApi
+      .markProjectViewed(projectId)
       .catch((err) => console.error("Failed to mark project viewed:", err));
   }, [projectId]);
 
@@ -371,337 +368,21 @@ export default function ProjectDetail() {
                 </button>
               </div>
               <div className="grid md:grid-cols-3 gap-6">
-                {/* MVP Section */}
-                <div className="p-4 border-l-4 border-green bg-lgreen rounded-lg">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-dark">MVP</h3>
-                    <button
-                      className="rounded-xl bg-green text-sm text-white p-2"
-                      onClick={() => {
-                        const section = page.sections?.find(
-                          (s) => s.title === "MVP",
-                        );
-                        handleAddClick(page.id, "MVP", section?.id);
-                      }}
-                    >
-                      + Add
-                    </button>
-                  </div>
-                  <ul className="space-y-1 text-sm text-gray-700">
-                    {page.sections
-                      ?.filter((section) => section.title === "MVP")
-                      .flatMap((section) =>
-                        (section.tasks || []).map((task) => (
-                          <li key={task.id} className="flex justify-between">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                className="accent-green"
-                                checked={task.completed}
-                                onChange={() =>
-                                  toggleTask(task.id, task.completed)
-                                }
-                              />
-                              <span>{task.title}</span>
-                            </div>
-
-                            <button
-                              className="text-green font-thin"
-                              onClick={() => deleteTask(task.id)}
-                            >
-                              <FaRegTrashCan size={15} />
-                            </button>
-                          </li>
-                        )),
-                      )}
-                    {(!page.sections ||
-                      page.sections.length === 0 ||
-                      !page.sections.some(
-                        (s) =>
-                          s.title === "MVP" &&
-                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id]),
-                      )) && (
-                      <li className="text-gray-400 italic">No MVP tasks</li>
-                    )}
-                    {(() => {
-                      const section = page.sections?.find(
-                        (s) => s.title === "MVP",
-                      );
-                      const key = section?.id || `${page.id}-MVP`;
-                      return (
-                        addingTask[key] && (
-                          <li className="flex items-center gap-2 mt-2">
-                            <input
-                              type="checkbox"
-                              className="accent-green"
-                              disabled
-                            />
-                            <input
-                              type="text"
-                              className="flex-1 px-2 py-1 border border-green rounded"
-                              placeholder="New task..."
-                              value={newTaskTitle[key] || ""}
-                              onChange={(e) =>
-                                setNewTaskTitle((prev) => ({
-                                  ...prev,
-                                  [key]: e.target.value,
-                                }))
-                              }
-                              onKeyPress={(e) => {
-                                if (e.key === "Enter") {
-                                  handleSubmitTask(page.id, "MVP", section?.id);
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <button
-                              className="text-green font-bold"
-                              onClick={() =>
-                                handleSubmitTask(page.id, "MVP", section?.id)
-                              }
-                            >
-                              ✓
-                            </button>
-                            <button
-                              className="text-red-500 font-bold"
-                              onClick={() =>
-                                handleCancelAdd(page.id, "MVP", section?.id)
-                              }
-                            >
-                              ✕
-                            </button>
-                          </li>
-                        )
-                      );
-                    })()}
-                  </ul>
-                </div>
-
-                {/* In Development Section */}
-                <div className="p-4 border-l-4 border-beige bg-lbeige rounded-lg">
-                  <div className="flex justify-between mb-3 items-center">
-                    <h3 className="text-lg font-semibold text-dark">
-                      In Development
-                    </h3>
-                    <button
-                      className="rounded-xl bg-khaki text-sm text-white p-2"
-                      onClick={() => {
-                        const section = page.sections?.find(
-                          (s) => s.title === "DEV",
-                        );
-                        handleAddClick(page.id, "DEV", section?.id);
-                      }}
-                    >
-                      + Add
-                    </button>
-                  </div>
-                  <ul className="space-y-1 text-sm text-gray-700">
-                    {page.sections
-                      ?.filter((section) => section.title === "DEV")
-                      .flatMap((section) =>
-                        (section.tasks || []).map((task) => (
-                          <li key={task.id} className="flex justify-between">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                className="accent-khaki"
-                                checked={task.completed}
-                                onChange={() =>
-                                  toggleTask(task.id, task.completed)
-                                }
-                              />
-                              <span>{task.title}</span>
-                            </div>
-
-                            <button
-                              className="text-khaki font-thin"
-                              onClick={() => deleteTask(task.id)}
-                            >
-                              <FaRegTrashCan size={15} />
-                            </button>
-                          </li>
-                        )),
-                      )}
-                    {(!page.sections ||
-                      page.sections.length === 0 ||
-                      !page.sections.some(
-                        (s) =>
-                          s.title === "DEV" &&
-                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id]),
-                      )) && (
-                      <li className="text-gray-400 italic">
-                        No development tasks
-                      </li>
-                    )}
-                    {(() => {
-                      const section = page.sections?.find(
-                        (s) => s.title === "DEV",
-                      );
-                      const key = section?.id || `${page.id}-DEV`;
-                      return (
-                        addingTask[key] && (
-                          <li className="flex items-center gap-2 mt-2">
-                            <input
-                              type="checkbox"
-                              className="accent-khaki"
-                              disabled
-                            />
-                            <input
-                              type="text"
-                              className="flex-1 px-2 py-1 border border-beige rounded"
-                              placeholder="New task..."
-                              value={newTaskTitle[key] || ""}
-                              onChange={(e) =>
-                                setNewTaskTitle((prev) => ({
-                                  ...prev,
-                                  [key]: e.target.value,
-                                }))
-                              }
-                              onKeyPress={(e) => {
-                                if (e.key === "Enter") {
-                                  handleSubmitTask(page.id, "DEV", section?.id);
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <button
-                              className="text-khaki font-bold"
-                              onClick={() =>
-                                handleSubmitTask(page.id, "DEV", section?.id)
-                              }
-                            >
-                              ✓
-                            </button>
-                            <button
-                              className="text-red-500 font-bold"
-                              onClick={() =>
-                                handleCancelAdd(page.id, "DEV", section?.id)
-                              }
-                            >
-                              ✕
-                            </button>
-                          </li>
-                        )
-                      );
-                    })()}
-                  </ul>
-                </div>
-
-                {/* In Deployment Section */}
-                <div className="p-4 border-l-4 border-blue bg-lblue rounded-lg">
-                  <div className="flex justify-between mb-3 items-center">
-                    <h3 className="text-lg font-semibold text-dark">
-                      In Deployment
-                    </h3>
-                    <button
-                      className="rounded-xl bg-dblue text-sm text-white p-2"
-                      onClick={() => {
-                        const section = page.sections?.find(
-                          (s) => s.title === "DEPLOY",
-                        );
-                        handleAddClick(page.id, "DEPLOY", section?.id);
-                      }}
-                    >
-                      + Add
-                    </button>
-                  </div>
-                  <ul className="space-y-1 text-sm text-gray-700">
-                    {page.sections
-                      ?.filter((section) => section.title === "DEPLOY")
-                      .flatMap((section) =>
-                        (section.tasks || []).map((task) => (
-                          <li
-                            key={task.id}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                className="accent-blue"
-                                checked={task.completed}
-                                onChange={() =>
-                                  toggleTask(task.id, task.completed)
-                                }
-                              />
-                              <span>{task.title}</span>
-                            </div>
-                            <button
-                              className="text-dblue font-thin"
-                              onClick={() => deleteTask(task.id)}
-                            >
-                              <FaRegTrashCan size={15} />
-                            </button>
-                          </li>
-                        )),
-                      )}
-                    {(!page.sections ||
-                      page.sections.length === 0 ||
-                      !page.sections.some(
-                        (s) =>
-                          s.title === "DEPLOY" &&
-                          ((s.tasks && s.tasks.length > 0) || addingTask[s.id]),
-                      )) && (
-                      <li className="text-gray-400 italic">
-                        No deployment tasks
-                      </li>
-                    )}
-                    {(() => {
-                      const section = page.sections?.find(
-                        (s) => s.title === "DEPLOY",
-                      );
-                      const key = section?.id || `${page.id}-DEPLOY`;
-                      return (
-                        addingTask[key] && (
-                          <li className="flex items-center gap-2 mt-2">
-                            <input
-                              type="checkbox"
-                              className="accent-blue"
-                              disabled
-                            />
-                            <input
-                              type="text"
-                              className="flex-1 px-2 py-1 border border-blue rounded"
-                              placeholder="New task..."
-                              value={newTaskTitle[key] || ""}
-                              onChange={(e) =>
-                                setNewTaskTitle((prev) => ({
-                                  ...prev,
-                                  [key]: e.target.value,
-                                }))
-                              }
-                              onKeyPress={(e) => {
-                                if (e.key === "Enter") {
-                                  handleSubmitTask(
-                                    page.id,
-                                    "DEPLOY",
-                                    section?.id,
-                                  );
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <button
-                              className="text-dblue font-bold"
-                              onClick={() =>
-                                handleSubmitTask(page.id, "DEPLOY", section?.id)
-                              }
-                            >
-                              ✓
-                            </button>
-                            <button
-                              className="text-red-500 font-bold"
-                              onClick={() =>
-                                handleCancelAdd(page.id, "DEPLOY", section?.id)
-                              }
-                            >
-                              ✕
-                            </button>
-                          </li>
-                        )
-                      );
-                    })()}
-                  </ul>
-                </div>
+                {SECTION_COLUMNS.map((columnConfig) => (
+                  <SectionColumn
+                    key={columnConfig.code}
+                    page={page}
+                    config={columnConfig}
+                    addingTask={addingTask}
+                    newTaskTitle={newTaskTitle}
+                    onToggleTask={toggleTask}
+                    onDeleteTask={deleteTask}
+                    onAddClick={handleAddClick}
+                    onCancelAdd={handleCancelAdd}
+                    onChangeNewTaskTitle={handleNewTaskTitleChange}
+                    onSubmitTask={handleSubmitTask}
+                  />
+                ))}
               </div>
             </div>
           ))}
@@ -755,76 +436,43 @@ export default function ProjectDetail() {
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="p-6 bg-dark rounded-xl shadow-2xl w-80 border border-gray-200">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Delete Page?
-            </h2>
-
-            <p className="text-green mb-6">
-              Are you sure you want to delete this page? This action cannot be
-              undone.
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-white text-dark font-semibold rounded-lg hover:bg-muted"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setPageToDelete(null);
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-800"
-                onClick={async () => deletePage(pageToDelete)}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="Delete Page?"
+          message="Are you sure you want to delete this page? This action cannot be undone."
+          onCancel={() => {
+            setShowDeleteModal(false);
+            setPageToDelete(null);
+          }}
+          onConfirm={async () => deletePage(pageToDelete)}
+        />
       )}
 
       {/* Status Modal */}
       {showUpdateStatusModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-30">
-          <div className="p-6 bg-dark rounded-xl shadow-2xl w-80 border border-gray-200">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Update Status
-            </h2>
-
-            <p className="text-green mb-6">
+        <ConfirmModal
+          title="Update Status"
+          message={
+            <>
               Switch project status to{" "}
-              <strong className="text-green">{STATUS_LABELS[statusToSet]}</strong>?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-white text-dark font-semibold rounded-lg hover:bg-muted"
-                onClick={() => {
-                  setShowUpdateStatusModal(false);
-                  setStatusToSet(null);
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                className="px-4 py-2 bg-green text-white font-semibold rounded-lg hover:bg-khaki"
-                onClick={async () => {
-                  await updateStatus(statusToSet);
-                  setShowUpdateStatusModal(false);
-                  setStatusToSet(null);
-                }}
-              >
-                Update
-              </button>
-            </div>
-          </div>
-        </div>
+              <strong className="text-green">
+                {STATUS_LABELS[statusToSet]}
+              </strong>
+              ?
+            </>
+          }
+          confirmLabel="Update"
+          confirmClass="bg-green hover:bg-khaki"
+          overlayClass="bg-opacity-30"
+          onCancel={() => {
+            setShowUpdateStatusModal(false);
+            setStatusToSet(null);
+          }}
+          onConfirm={async () => {
+            await updateStatus(statusToSet);
+            setShowUpdateStatusModal(false);
+            setStatusToSet(null);
+          }}
+        />
       )}
     </div>
   );

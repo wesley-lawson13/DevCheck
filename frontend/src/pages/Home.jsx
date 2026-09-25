@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
-import api from "../api";
+import ConfirmModal from "../components/ConfirmModal";
+import ProjectCard from "../components/ProjectCard";
+import * as projectsApi from "../services/projects";
 import { STATUS_BG, STATUS_LABELS, STATUS_TEXT } from "../constants";
 import { FaRegTrashCan } from "react-icons/fa6";
 
@@ -39,7 +41,7 @@ function Home() {
 
   const fetchUser = async () => {
     try {
-      const res = await api.get("/checklists/user/");
+      const res = await projectsApi.getCurrentUser();
       if (res.status === 200 || res.status === 201) {
         setUser(res.data);
       }
@@ -49,8 +51,8 @@ function Home() {
   };
 
   const getProjects = () => {
-    api
-      .get("/checklists/projects/")
+    projectsApi
+      .listProjects()
       .then((res) => res.data)
       .then((data) => {
         setProjects(data);
@@ -107,7 +109,7 @@ function Home() {
     }
 
     try {
-      const res = await api.delete(`checklists/projects/${projectId}/`);
+      const res = await projectsApi.deleteProject(projectId);
 
       if (res.status === 200 || res.status === 204) {
         setShowDeleteProjectModal(false);
@@ -131,9 +133,7 @@ function Home() {
     setLoading(true);
 
     try {
-      const res = await api.post("/checklists/issues/", {
-        description: issue,
-      });
+      const res = await projectsApi.reportIssue(issue);
 
       if (res.status === 200 || res.status === 201) {
         setIssue("");
@@ -226,99 +226,9 @@ function Home() {
               </Link>.
             </span>
           )}
-          {!showAllProjects
-            ? recentProjects.map((project, key) => (
-                <Link
-                  to={`/projects/${project.id}`}
-                  key={key}
-                  className="block bg-white border-muted shadow-lg rounded-xl hover:scale-[1.02] hover:shadow-xl transition-transform duration-200"
-                >
-                  <div className="h-48 overflow-hidden rounded-xl mx-auto mb-5 bg-dark">
-                    <img src={project.image} alt={project.name} />
-                  </div>
-                  <div className="mx-2 text-center text-xl">
-                    <h5 className="text-dark font-bold mb-2">{project.name}</h5>
-                    <p className="text-dark font-light text-sm mb-3">
-                      {project.description}
-                    </p>
-                  </div>
-                  <hr className="m-4 text-dark/20" />
-                  <div className="m-2 flex text-center mb-5 justify-between items-center gap-auto">
-                    <span
-                      className={`text-white p-2 font-bold text-md ${
-                        bgColors[project.project_status]
-                      } rounded-xl`}
-                    >
-                      {STATUS_LABELS[project.project_status]}
-                    </span>
-                    {project.task_total > 0 ? (
-                      <span
-                        className={`font-bold text-md ${
-                          txtColors[project.project_status]
-                        } mx-2 self-center`}
-                      >
-                        {project.task_completed} / {project.task_total}{" "}
-                        <span className="text-sm italic">completed.</span>
-                      </span>
-                    ) : (
-                      <span
-                        className={`font-bold text-sm ${
-                          txtColors[project.project_status]
-                        } mx-2 self-center italic`}
-                      >
-                        No tasks yet
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))
-            : allProjects.map((project, key) => (
-                <Link
-                  to={`/projects/${project.id}`}
-                  key={key}
-                  className="block bg-white border-muted shadow-lg rounded-xl hover:scale-[1.02] hover:shadow-xl transition-transform duration-200"
-                >
-                  <div className="h-48 bg-dark overflow-hidden rounded-xl mx-auto mb-5">
-                    <img src={project.image} alt={project.name} />
-                  </div>
-                  <div className="mx-2 text-center text-xl">
-                    <h5 className="text-dark font-bold mb-2 align-self-center">
-                      {project.name}
-                    </h5>
-                    <p className="text-dark font-light text-sm mb-3">
-                      {project.description}
-                    </p>
-                  </div>
-                  <hr className="m-4 text-dark/20" />
-                  <div className="m-2 flex text-center mb-5 justify-between items-center gap-auto">
-                    <span
-                      className={`text-white p-2 font-bold text-md ${
-                        bgColors[project.project_status]
-                      } rounded-xl`}
-                    >
-                      {STATUS_LABELS[project.project_status]}
-                    </span>
-                    {project.task_total > 0 ? (
-                      <span
-                        className={`font-bold text-md ${
-                          txtColors[project.project_status]
-                        } mx-2 self-center`}
-                      >
-                        {project.task_completed} / {project.task_total}{" "}
-                        <span className="text-sm italic">completed.</span>
-                      </span>
-                    ) : (
-                      <span
-                        className={`font-bold text-sm ${
-                          txtColors[project.project_status]
-                        } mx-2 self-center italic`}
-                      >
-                        No tasks yet
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              ))}
+          {(!showAllProjects ? recentProjects : allProjects).map(
+            (project, key) => <ProjectCard project={project} key={key} />,
+          )}
         </div>
         <div className="flex justify-end items-center p-2 mb-2">
           {projects.length <= 3 ? (
@@ -466,37 +376,15 @@ function Home() {
 
       {/* Delete Project Modal */}
       {showDeleteProjectModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="p-6 bg-dark rounded-xl shadow-2xl w-80 border border-gray-200">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Delete Project?
-            </h2>
-
-            <p className="text-green mb-6">
-              Are you sure you want to delete this project? This action cannot
-              be undone and all related tasks will be deleted.
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-white text-dark font-semibold rounded-lg hover:bg-muted"
-                onClick={() => {
-                  setShowDeleteProjectModal(false);
-                  setProjectToDelete(null);
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-800"
-                onClick={async () => deleteProject(projectToDelete)}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="Delete Project?"
+          message="Are you sure you want to delete this project? This action cannot be undone and all related tasks will be deleted."
+          onCancel={() => {
+            setShowDeleteProjectModal(false);
+            setProjectToDelete(null);
+          }}
+          onConfirm={async () => deleteProject(projectToDelete)}
+        />
       )}
     </div>
   );
