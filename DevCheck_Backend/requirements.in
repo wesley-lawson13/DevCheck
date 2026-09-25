@@ -1,0 +1,12 @@
+Django>=5.2,<5.3
+djangorestframework
+djangorestframework_simplejwt
+django-cors-headers
+dj-database-url
+cloudinary
+dj3-cloudinary-storage
+gunicorn>=23,<24
+pillow
+psycopg2-binary
+python-dotenv
+whitenoise
