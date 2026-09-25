@@ -74,7 +74,8 @@ class ChecklistSectionSerializer(serializers.ModelSerializer):
         model = ChecklistSection
         fields = '__all__'
         extra_kwargs = {
-            'page': {'read_only': True}
+            'page': {'read_only': True},
+            'order': {'read_only': True},
         }
 
     def validate_title(self, value):
@@ -88,6 +89,15 @@ class ChecklistSectionSerializer(serializers.ModelSerializer):
             if clashes.exists():
                 raise serializers.ValidationError("This page already has a section with that title.")
         return value
+
+    def create(self, validated_data):
+        validated_data['order'] = ChecklistSection.SECTION_ORDER.get(validated_data.get('title'), 0)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if 'title' in validated_data:
+            validated_data['order'] = ChecklistSection.SECTION_ORDER.get(validated_data['title'], instance.order)
+        return super().update(instance, validated_data)
 
 class PageSerializer(serializers.ModelSerializer):
     class Meta:

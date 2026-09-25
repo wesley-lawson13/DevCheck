@@ -72,6 +72,24 @@ def test_section_title_must_be_a_valid_choice(api_client, user, project_tree):
     assert "title" in res.data
 
 
+def test_sections_are_ordered_by_stage_regardless_of_creation_order(api_client, user, project_tree):
+    _, page, sections, _ = project_tree(user)
+    for title in ("MVP", "DEV", "DEPLOY"):
+        sections[title].delete()
+    for title in ("DEPLOY", "MVP", "DEV"):
+        assert api_client.post(SECTIONS.format(page.id), {"title": title}, format="json").status_code == 201
+    listing = api_client.get(SECTIONS.format(page.id))
+    assert [s["title"] for s in rows(listing)] == ["MVP", "DEV", "DEPLOY"]
+
+
+def test_section_order_is_not_client_settable(api_client, user, project_tree):
+    _, page, sections, _ = project_tree(user)
+    sections["DEPLOY"].delete()
+    res = api_client.post(SECTIONS.format(page.id), {"title": "DEPLOY", "order": 99}, format="json")
+    assert res.status_code == 201, res.data
+    assert res.data["order"] == 2
+
+
 def test_same_title_is_allowed_on_different_pages(api_client, user, project_tree):
     project, _, *_ = project_tree(user)
     second = Page.objects.create(project=project, name="Second")
@@ -159,6 +177,17 @@ def test_delete_task(api_client, user, project_tree):
     assert res.status_code == 204
     assert sections["MVP"].tasks.count() == 0
     assert Task.objects.count() == 2
+
+
+def test_task_order_is_stable_after_toggling(api_client, user, project_tree):
+    _, _, sections, _ = project_tree(user)
+    section = sections["MVP"]
+    first = Task.objects.get(section=section)
+    second = Task.objects.create(section=section, title="Second task")
+    url = TASKS.format(section.id)
+    assert [t["id"] for t in rows(api_client.get(url))] == [first.id, second.id]
+    api_client.patch(f"/checklists/tasks/{first.id}/", {"completed": True}, format="json")
+    assert [t["id"] for t in rows(api_client.get(url))] == [first.id, second.id]
 
 
 def test_missing_ids_are_404(api_client):

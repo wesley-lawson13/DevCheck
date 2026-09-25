@@ -33,6 +33,9 @@ class Page(models.Model):
     name = models.CharField(max_length=100)
     order = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        ordering = ["order", "id"]
+
     def __str__(self):
         return f"{self.project.name} - {self.name}"
 
@@ -44,12 +47,16 @@ class ChecklistSection(models.Model):
         ("DEV", "In Development"),
         ("DEPLOY", "In Deployment"),
     ]
+    # A section's position always follows its stage in SECTION_CHOICES, not creation order.
+    SECTION_ORDER = {code: index for index, (code, _) in enumerate(SECTION_CHOICES)}
+
     page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="sections")
     title = models.CharField(max_length=20, choices=SECTION_CHOICES)
     order = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("page", "title")  # One section of each type per page
+        ordering = ["order", "id"]
 
     def __str__(self):
         return f"{self.page.name} - {self.get_title_display()}"
@@ -62,6 +69,9 @@ class Task(models.Model):
     completed = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "id"]
 
     def __str__(self):
         return f"{self.title} ({'done' if self.completed else 'pending'})"
