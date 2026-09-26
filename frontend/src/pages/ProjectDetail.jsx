@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
 import ConfirmModal from "../components/ConfirmModal";
 import SectionColumn from "../components/SectionColumn";
@@ -27,7 +27,7 @@ export default function ProjectDetail() {
   const projectCreated = location.state?.message;
 
   // returns full project tree w/ associated pages, sections, tasks, etc.
-  const getProject = async () => {
+  const getProject = useCallback(async () => {
     try {
       const res = await projectsApi.getProjectDetail(projectId);
       setProject(res.data);
@@ -36,7 +36,7 @@ export default function ProjectDetail() {
     } catch (err) {
       setErrorMessage(getErrorMessage(err, "Failed to fetch project details."));
     }
-  };
+  }, [projectId]);
 
   const statusColors = STATUS_BG;
 
@@ -207,7 +207,7 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     getProject();
-  }, [projectId]);
+  }, [getProject]);
 
   useEffect(() => {
     projectsApi.markProjectViewed(projectId).catch(() => {});

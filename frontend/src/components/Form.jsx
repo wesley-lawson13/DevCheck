@@ -56,7 +56,10 @@ function Form({ route, method }) {
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Password"
       />
-      <button className="bg-green rounded-xl text-white hover:bg-green/80 text-lg font-bold px-2 py-3 w-7/8 mt-4 mb-2">
+      <button
+        disabled={loading}
+        className="bg-green rounded-xl text-white hover:bg-green/80 disabled:opacity-60 disabled:cursor-not-allowed text-lg font-bold px-2 py-3 w-7/8 mt-4 mb-2"
+      >
         {name}
       </button>
     </form>
