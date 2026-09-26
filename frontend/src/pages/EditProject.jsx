@@ -109,7 +109,7 @@ export default function EditProject() {
 
         const res = await api.patch(
           `checklists/projects/${projectId}/detail/`,
-          submitData
+          submitData,
         );
 
         if (res.status === 200 || res.status === 201) {
@@ -126,7 +126,7 @@ export default function EditProject() {
         if (thumbnailRemoved) body.image = null;
         const res = await api.patch(
           `checklists/projects/${projectId}/detail/`,
-          body
+          body,
         );
 
         if (res.status === 200 || res.status === 201) {
@@ -171,7 +171,8 @@ export default function EditProject() {
             {/* Thumbnail Upload */}
             <div>
               <label className="block text-sm font-medium text-dark mb-2">
-                Thumbnail Image <span className="text-dark-400">(optional)</span>
+                Thumbnail Image{" "}
+                <span className="text-dark-400">(optional)</span>
               </label>
               {thumbnailPreview ? (
                 <div className="relative inline-block">

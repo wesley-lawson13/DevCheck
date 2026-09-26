@@ -1,4 +1,4 @@
-import { setupServer } from 'msw/node'
+import { setupServer } from "msw/node";
 
-export const API = 'http://api.test'
-export const server = setupServer()
+export const API = "http://api.test";
+export const server = setupServer();

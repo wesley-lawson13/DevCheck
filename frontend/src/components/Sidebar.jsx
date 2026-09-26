@@ -96,7 +96,7 @@ export default function Sidebar() {
       {
         root: container, // IMPORTANT: scroll container, not window
         threshold: 0.6,
-      }
+      },
     );
 
     sections.forEach((section) => observer.observe(section));

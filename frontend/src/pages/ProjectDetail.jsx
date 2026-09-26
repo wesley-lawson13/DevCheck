@@ -3,7 +3,12 @@ import { FaRegTrashCan } from "react-icons/fa6";
 import ConfirmModal from "../components/ConfirmModal";
 import SectionColumn from "../components/SectionColumn";
 import * as projectsApi from "../services/projects";
-import { SECTION_COLUMNS, STATUS_BG, STATUS_CODES, STATUS_LABELS } from "../constants";
+import {
+  SECTION_COLUMNS,
+  STATUS_BG,
+  STATUS_CODES,
+  STATUS_LABELS,
+} from "../constants";
 import { getErrorMessage } from "../utils/errors";
 import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";

@@ -1,6 +1,9 @@
 // Flattens an axios error (typically a DRF error response) into one
 // human-readable string, so callers can show it inline instead of alert().
-export function getErrorMessage(err, fallback = "Something went wrong. Please try again.") {
+export function getErrorMessage(
+  err,
+  fallback = "Something went wrong. Please try again.",
+) {
   const data = err?.response?.data;
 
   if (!data) {

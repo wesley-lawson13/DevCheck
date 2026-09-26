@@ -193,9 +193,8 @@ function Home() {
           <div className="flex justify-center">
             <h2 className="text-dark font-bold text-6xl justify-self-center">
               {
-                projects.filter(
-                  (project) => project.project_status === "DEV",
-                ).length
+                projects.filter((project) => project.project_status === "DEV")
+                  .length
               }
             </h2>
           </div>
@@ -228,11 +227,14 @@ function Home() {
               No projects yet.{" "}
               <Link to="/create-project" className="text-khaki font-semibold">
                 Create Your First Project
-              </Link>.
+              </Link>
+              .
             </span>
           )}
           {(!showAllProjects ? recentProjects : allProjects).map(
-            (project, key) => <ProjectCard project={project} key={key} />,
+            (project, key) => (
+              <ProjectCard project={project} key={key} />
+            ),
           )}
         </div>
         <div className="flex justify-end items-center p-2 mb-2">

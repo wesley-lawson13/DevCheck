@@ -1,5 +1,5 @@
 export const ACCESS_TOKEN = "access";
-export const REFRESH_TOKEN = "refresh"
+export const REFRESH_TOKEN = "refresh";
 
 // Project status codes match the backend's Project.Status choices.
 export const STATUS_CODES = ["MVP", "DEV", "DEPLOY"];
