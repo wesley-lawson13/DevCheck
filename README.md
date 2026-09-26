@@ -72,6 +72,16 @@ python manage.py runserver
 Your Django backend should now be running at:
 http://127.0.0.1:8000/
 
+#### Load Demo Data (optional)
+
+To fill the dashboard with realistic projects, pages and partly-completed checklists:
+
+```bash
+python manage.py seed_demo
+```
+
+This creates a `demo` user (password `demo-pass-123`) with four projects across MVP / In Development / In Deployment. Re-running it replaces that user's projects instead of duplicating them. Use `--username` / `--password` to change the login.
+
 ### 3. Frontend Setup
 
 ```bash
