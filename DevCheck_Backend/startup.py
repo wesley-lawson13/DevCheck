@@ -1,11 +1,12 @@
 import os
+
 import django
 
 # Only run if environment variable is set
 if os.environ.get("CREATE_SUPERUSER") == "True":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "DevCheck_Backend.settings")
     django.setup()
-    
+
     from django.contrib.auth import get_user_model
 
     User = get_user_model()

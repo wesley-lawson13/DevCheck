@@ -1,7 +1,5 @@
 """Page / section / task CRUD, task toggling and section uniqueness."""
 
-import pytest
-
 from checklists.models import ChecklistSection, Page, Task
 
 PAGES = "/checklists/projects/{}/pages/"
@@ -14,6 +12,7 @@ def rows(res):
 
 
 # --- pages ---
+
 
 def test_create_and_list_pages(api_client, user, project_tree):
     project, *_ = project_tree(user)
@@ -58,10 +57,15 @@ def test_delete_page_cascades_to_sections_and_tasks(api_client, user, project_tr
     _, page, *_ = project_tree(user)
     res = api_client.delete(f"/checklists/pages/{page.id}/")
     assert res.status_code == 204
-    assert (Page.objects.count(), ChecklistSection.objects.count(), Task.objects.count()) == (0, 0, 0)
+    assert (Page.objects.count(), ChecklistSection.objects.count(), Task.objects.count()) == (
+        0,
+        0,
+        0,
+    )
 
 
 # --- sections ---
+
 
 def test_create_and_list_sections(api_client, user, project_tree):
     _, page, sections, _ = project_tree(user)
@@ -86,7 +90,10 @@ def test_sections_are_ordered_by_stage_regardless_of_creation_order(api_client, 
     for title in ("MVP", "DEV", "DEPLOY"):
         sections[title].delete()
     for title in ("DEPLOY", "MVP", "DEV"):
-        assert api_client.post(SECTIONS.format(page.id), {"title": title}, format="json").status_code == 201
+        assert (
+            api_client.post(SECTIONS.format(page.id), {"title": title}, format="json").status_code
+            == 201
+        )
     listing = api_client.get(SECTIONS.format(page.id))
     assert [s["title"] for s in rows(listing)] == ["MVP", "DEV", "DEPLOY"]
 
@@ -122,6 +129,7 @@ def test_delete_section_cascades_to_its_tasks(api_client, user, project_tree):
 
 
 # --- tasks ---
+
 
 def test_create_and_list_tasks(api_client, user, project_tree):
     _, _, sections, _ = project_tree(user)
@@ -174,7 +182,9 @@ def test_task_cannot_be_moved_to_another_section(api_client, user, project_tree)
 
 def test_edit_task_title(api_client, user, project_tree):
     _, _, _, tasks = project_tree(user)
-    res = api_client.patch(f"/checklists/tasks/{tasks['MVP'].id}/", {"title": "Renamed"}, format="json")
+    res = api_client.patch(
+        f"/checklists/tasks/{tasks['MVP'].id}/", {"title": "Renamed"}, format="json"
+    )
     assert res.status_code == 200
     tasks["MVP"].refresh_from_db()
     assert tasks["MVP"].title == "Renamed"

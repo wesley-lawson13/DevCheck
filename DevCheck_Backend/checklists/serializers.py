@@ -4,9 +4,11 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import Project, Page, ChecklistSection, Task, Issue
+from .models import ChecklistSection, Issue, Page, Project, Task
 
-DEFAULT_PROJECT_IMAGE_URL = "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
+DEFAULT_PROJECT_IMAGE_URL = (
+    "https://res.cloudinary.com/dpodsvx94/image/upload/v1769448461/copyLogo_tni1wh.png"
+)
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 
@@ -35,13 +37,14 @@ class ProjectImageMixin:
         data["image"] = url
         return data
 
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, style={"input_type": "password"})
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'date_joined']
-        read_only_fields = ['id', 'date_joined']
+        fields = ["id", "username", "password", "date_joined"]
+        read_only_fields = ["id", "date_joined"]
 
     def validate(self, attrs):
         # Build an unsaved user so similarity validators can compare against the username.
@@ -49,7 +52,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         try:
             password_validation.validate_password(attrs["password"], user=candidate)
         except DjangoValidationError as e:
-            raise serializers.ValidationError({"password": list(e.messages)})
+            raise serializers.ValidationError({"password": list(e.messages)}) from e
         return attrs
 
     def create(self, validated_data):
@@ -61,49 +64,56 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'date_joined']
+        fields = ["id", "username", "date_joined"]
         read_only_fields = fields
+
 
 class ChecklistTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = '__all__'
-        read_only_fields = ['section']
+        fields = "__all__"
+        read_only_fields = ["section"]
+
 
 class ChecklistSectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChecklistSection
-        fields = '__all__'
+        fields = "__all__"
         extra_kwargs = {
-            'page': {'read_only': True},
-            'order': {'read_only': True},
+            "page": {"read_only": True},
+            "order": {"read_only": True},
         }
 
     def validate_title(self, value):
         # The (page, title) unique validator is skipped because `page` is read-only,
         # so enforce it here to return 400 instead of an IntegrityError 500.
-        page = self.context.get('page') or getattr(self.instance, 'page', None)
+        page = self.context.get("page") or getattr(self.instance, "page", None)
         if page is not None:
             clashes = page.sections.filter(title=value)
             if self.instance is not None:
                 clashes = clashes.exclude(pk=self.instance.pk)
             if clashes.exists():
-                raise serializers.ValidationError("This page already has a section with that title.")
+                raise serializers.ValidationError(
+                    "This page already has a section with that title."
+                )
         return value
 
     def create(self, validated_data):
-        validated_data['order'] = ChecklistSection.SECTION_ORDER.get(validated_data.get('title'), 0)
+        validated_data["order"] = ChecklistSection.SECTION_ORDER.get(validated_data.get("title"), 0)
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        if 'title' in validated_data:
-            validated_data['order'] = ChecklistSection.SECTION_ORDER.get(validated_data['title'], instance.order)
+        if "title" in validated_data:
+            validated_data["order"] = ChecklistSection.SECTION_ORDER.get(
+                validated_data["title"], instance.order
+            )
         return super().update(instance, validated_data)
+
 
 class ChecklistTaskNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
-        fields = ['id', 'title', 'completed']
+        fields = ["id", "title", "completed"]
 
 
 class ChecklistSectionNestedSerializer(serializers.ModelSerializer):
@@ -111,7 +121,7 @@ class ChecklistSectionNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChecklistSection
-        fields = ['id', 'title', 'tasks']
+        fields = ["id", "title", "tasks"]
 
 
 def create_default_sections(page):
@@ -127,10 +137,10 @@ class PageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Page
-        fields = ['id', 'project', 'name', 'order', 'sections']
+        fields = ["id", "project", "name", "order", "sections"]
         extra_kwargs = {
-            'order': {'required': False},
-            'project': {'read_only': True},
+            "order": {"required": False},
+            "project": {"read_only": True},
         }
 
     def create(self, validated_data):
@@ -138,6 +148,7 @@ class PageSerializer(serializers.ModelSerializer):
             page = super().create(validated_data)
             create_default_sections(page)
         return page
+
 
 class ProjectSerializer(ProjectImageMixin, serializers.ModelSerializer):
     # Annotated by the list view's queryset; absent (and simply omitted from output) on a
@@ -147,17 +158,18 @@ class ProjectSerializer(ProjectImageMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = '__all__'
+        fields = "__all__"
         extra_kwargs = {
-            'owner': {'read_only': True},
+            "owner": {"read_only": True},
         }
+
 
 class PageNestedSerializer(serializers.ModelSerializer):
     sections = ChecklistSectionNestedSerializer(many=True, read_only=True)
 
     class Meta:
         model = Page
-        fields = ['id', 'name', 'sections']
+        fields = ["id", "name", "sections"]
 
 
 class ProjectDetailSerializer(ProjectImageMixin, serializers.ModelSerializer):
@@ -165,7 +177,8 @@ class ProjectDetailSerializer(ProjectImageMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'description', 'link', 'pages', 'project_status', 'image']
+        fields = ["id", "name", "description", "link", "pages", "project_status", "image"]
+
 
 class TreePageSerializer(serializers.Serializer):
     """One page within a tree-create payload: a name plus tasks grouped by section."""
@@ -195,14 +208,14 @@ class ProjectTreeSerializer(serializers.Serializer):
     pages = TreePageSerializer(many=True, allow_empty=False)
 
     def create(self, validated_data):
-        project = self.context['project']
+        project = self.context["project"]
         pages = []
         with transaction.atomic():
-            for page_data in validated_data['pages']:
-                page = Page.objects.create(project=project, name=page_data['name'])
+            for page_data in validated_data["pages"]:
+                page = Page.objects.create(project=project, name=page_data["name"])
                 create_default_sections(page)
                 sections_by_title = {s.title: s for s in page.sections.all()}
-                for title, task_titles in page_data['tasks'].items():
+                for title, task_titles in page_data["tasks"].items():
                     section = sections_by_title[title]
                     Task.objects.bulk_create(
                         Task(section=section, title=t, order=i) for i, t in enumerate(task_titles)
@@ -218,4 +231,4 @@ class IssueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['description', 'user', 'date_submitted']
+        fields = ["description", "user", "date_submitted"]

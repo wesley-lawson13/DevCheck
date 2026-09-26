@@ -29,7 +29,12 @@ DETAIL_CASES = [
     ),
     ("project-delete", "delete", "/checklists/projects/{project}/", None),
     ("project-viewed", "post", "/checklists/projects/{project}/viewed/", None),
-    ("project-tree-create", "post", "/checklists/projects/{project}/tree/", {"pages": [{"name": "pwned"}]}),
+    (
+        "project-tree-create",
+        "post",
+        "/checklists/projects/{project}/tree/",
+        {"pages": [{"name": "pwned"}]},
+    ),
     ("page-get", "get", "/checklists/pages/{page}/", None),
     ("page-patch", "patch", "/checklists/pages/{page}/", {"name": "pwned"}),
     ("page-put", "put", "/checklists/pages/{page}/", {"name": "pwned", "order": 3}),
@@ -66,7 +71,9 @@ def foreign(other_user, project_tree):
     }
 
 
-@pytest.mark.parametrize("label, method, template, body", DETAIL_CASES, ids=[c[0] for c in DETAIL_CASES])
+@pytest.mark.parametrize(
+    "label, method, template, body", DETAIL_CASES, ids=[c[0] for c in DETAIL_CASES]
+)
 def test_foreign_object_is_404_and_untouched(api_client, foreign, label, method, template, body):
     before = snapshot()
     res = getattr(api_client, method)(template.format(**foreign), body, format="json")
@@ -93,7 +100,7 @@ def test_owner_still_has_access_to_the_same_objects(other_user, foreign):
 
     owner = APIClient()
     owner.force_authenticate(user=other_user)
-    for label, method, template, body in DETAIL_CASES:
+    for label, method, template, _body in DETAIL_CASES:
         if method != "get":
             continue
         res = owner.get(template.format(**foreign))

@@ -1,27 +1,33 @@
 from django.urls import path
-from .import views 
+
+from . import views
 
 urlpatterns = [
-
     # PROJECTS
-    path('projects/', views.ProjectListCreate.as_view(), name='project-list'),
-    path('projects/<int:pk>/', views.ProjectDelete.as_view(), name='project-delete'),
-    path('projects/<int:pk>/detail/', views.ProjectDetailView.as_view(), name='project-detail'),
-    path('projects/<int:pk>/viewed/', views.ProjectViewedView.as_view(), name='project-viewed'),
-    path('projects/<int:pk>/tree/', views.ProjectTreeCreateView.as_view(), name='project-tree-create'),
-
+    path("projects/", views.ProjectListCreate.as_view(), name="project-list"),
+    path("projects/<int:pk>/", views.ProjectDelete.as_view(), name="project-delete"),
+    path("projects/<int:pk>/detail/", views.ProjectDetailView.as_view(), name="project-detail"),
+    path("projects/<int:pk>/viewed/", views.ProjectViewedView.as_view(), name="project-viewed"),
+    path(
+        "projects/<int:pk>/tree/", views.ProjectTreeCreateView.as_view(), name="project-tree-create"
+    ),
     # PAGES
-    path('projects/<int:project_id>/pages/', views.PageListCreate.as_view(), name='page-list-create'),
-    path('pages/<int:pk>/', views.PageDetail.as_view(), name='page-detail'),
-
+    path(
+        "projects/<int:project_id>/pages/", views.PageListCreate.as_view(), name="page-list-create"
+    ),
+    path("pages/<int:pk>/", views.PageDetail.as_view(), name="page-detail"),
     # SECTIONS
-    path('pages/<int:page_id>/sections/', views.ChecklistSectionListCreate.as_view(), name='section-list-create'),
-    path('sections/<int:pk>/', views.ChecklistSectionDetail.as_view(), name='section-detail'),
-
+    path(
+        "pages/<int:page_id>/sections/",
+        views.ChecklistSectionListCreate.as_view(),
+        name="section-list-create",
+    ),
+    path("sections/<int:pk>/", views.ChecklistSectionDetail.as_view(), name="section-detail"),
     # TASKS
-    path('sections/<int:section_id>/tasks/', views.TaskListCreate.as_view(), name='task-list-create'),
-    path('tasks/<int:pk>/', views.TaskDetail.as_view(), name='task-detail'),
-
+    path(
+        "sections/<int:section_id>/tasks/", views.TaskListCreate.as_view(), name="task-list-create"
+    ),
+    path("tasks/<int:pk>/", views.TaskDetail.as_view(), name="task-detail"),
     # ISSUES / COMPLAINTS
-    path('issues/', views.CreateIssueView.as_view(), name='create-issue'),
+    path("issues/", views.CreateIssueView.as_view(), name="create-issue"),
 ]

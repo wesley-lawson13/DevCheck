@@ -48,9 +48,13 @@ def test_detail_returns_uploaded_image_url(api_client, user):
 
 
 def test_multipart_patch_replaces_image(api_client, user):
-    project = Project.objects.create(owner=user, name="P", description="d", image=make_image("old.png"))
+    project = Project.objects.create(
+        owner=user, name="P", description="d", image=make_image("old.png")
+    )
     old_name = project.image.name
-    res = api_client.patch(detail_url(project), {"image": make_image("new.png")}, format="multipart")
+    res = api_client.patch(
+        detail_url(project), {"image": make_image("new.png")}, format="multipart"
+    )
     assert res.status_code == 200, res.data
     project.refresh_from_db()
     assert project.image.name != old_name
@@ -97,6 +101,7 @@ def test_non_image_upload_is_rejected(api_client):
 
 
 # --- 1.3: JSON accepted on project views (was 415) ---
+
 
 def test_json_patch_status_and_name(api_client, user):
     project = Project.objects.create(owner=user, name="P", description="d")

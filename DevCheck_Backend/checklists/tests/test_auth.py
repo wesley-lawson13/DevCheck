@@ -35,7 +35,9 @@ def test_register_login_and_call_api(anon_client):
 
 
 def test_register_duplicate_username_is_400(anon_client, user):
-    res = anon_client.post(REGISTER, {"username": user.username, "password": PASSWORD}, format="json")
+    res = anon_client.post(
+        REGISTER, {"username": user.username, "password": PASSWORD}, format="json"
+    )
     assert res.status_code == 400
     assert "username" in res.data
 

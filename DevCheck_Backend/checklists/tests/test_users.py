@@ -6,7 +6,9 @@ USER = "/checklists/user/"
 
 
 def test_register_hashes_password(anon_client):
-    res = anon_client.post(REGISTER, {"username": "carol", "password": "a-Good-pass-987"}, format="json")
+    res = anon_client.post(
+        REGISTER, {"username": "carol", "password": "a-Good-pass-987"}, format="json"
+    )
     assert res.status_code == 201, res.data
     assert "password" not in res.data
     user = User.objects.get(username="carol")
@@ -23,7 +25,9 @@ def test_register_rejects_weak_password(anon_client, weak):
 
 
 def test_register_rejects_password_similar_to_username(anon_client):
-    res = anon_client.post(REGISTER, {"username": "carolsmith", "password": "carolsmith"}, format="json")
+    res = anon_client.post(
+        REGISTER, {"username": "carolsmith", "password": "carolsmith"}, format="json"
+    )
     assert res.status_code == 400
 
 
@@ -37,7 +41,9 @@ def test_get_current_user_has_no_password(api_client, user):
 @pytest.mark.parametrize("method", ["patch", "put"])
 def test_user_endpoint_is_read_only(api_client, user, method):
     old_hash = user.password
-    res = getattr(api_client, method)(USER, {"password": "plaintext", "username": "hax"}, format="json")
+    res = getattr(api_client, method)(
+        USER, {"password": "plaintext", "username": "hax"}, format="json"
+    )
     assert res.status_code == 405
     user.refresh_from_db()
     assert user.password == old_hash and user.username == "alice"

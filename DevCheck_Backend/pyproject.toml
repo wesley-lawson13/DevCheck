@@ -1,0 +1,7 @@
+[tool.ruff]
+line-length = 100
+extend-exclude = ["venv", "media", "staticfiles", "*/migrations"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, isort, pyupgrade, bugbear
+select = ["E", "F", "I", "UP", "B"]

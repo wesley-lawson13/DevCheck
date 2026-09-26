@@ -1,7 +1,5 @@
 """POST /checklists/projects/<id>/tree/: atomic multi-page/section/task creation (4.1, B8)."""
 
-import pytest
-
 from checklists.models import ChecklistSection, Page, Project, Task
 
 
@@ -66,5 +64,7 @@ def test_tree_under_foreign_project_is_404(api_client, other_user):
 
 
 def test_tree_under_missing_project_is_404(api_client):
-    res = api_client.post("/checklists/projects/9999/tree/", {"pages": [{"name": "X"}]}, format="json")
+    res = api_client.post(
+        "/checklists/projects/9999/tree/", {"pages": [{"name": "X"}]}, format="json"
+    )
     assert res.status_code == 404

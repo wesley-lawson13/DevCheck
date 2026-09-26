@@ -46,7 +46,7 @@ def count_naive_queries(project):
     """Serialize the same tree with no prefetch: what the endpoint would cost without it."""
     with CaptureQueriesContext(connection) as ctx:
         fresh = Project.objects.get(pk=project.pk)
-        ProjectDetailSerializer(fresh).data
+        _ = ProjectDetailSerializer(fresh).data
     return len(ctx)
 
 

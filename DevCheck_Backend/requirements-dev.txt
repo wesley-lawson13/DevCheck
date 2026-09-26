@@ -12,12 +12,16 @@ certifi==2026.7.22
     # via
     #   cloudinary
     #   requests
+cfgv==3.5.0
+    # via pre-commit
 charset-normalizer==3.5.1
     # via requests
 cloudinary==1.46.2
     # via
     #   -r requirements.in
     #   dj3-cloudinary-storage
+distlib==0.4.3
+    # via virtualenv
 dj-database-url==3.1.2
     # via -r requirements.in
 dj3-cloudinary-storage==0.0.6
@@ -37,20 +41,32 @@ djangorestframework==3.18.1
     #   djangorestframework-simplejwt
 djangorestframework-simplejwt==5.5.1
     # via -r requirements.in
+filelock==4.0.4
+    # via
+    #   python-discovery
+    #   virtualenv
 gunicorn==23.0.0
     # via -r requirements.in
+identify==2.6.19
+    # via pre-commit
 idna==3.20
     # via requests
 iniconfig==2.3.0
     # via pytest
+nodeenv==1.11.0
+    # via pre-commit
 packaging==26.3
     # via
     #   gunicorn
     #   pytest
 pillow==12.3.0
     # via -r requirements.in
+platformdirs==4.12.0
+    # via virtualenv
 pluggy==1.6.0
     # via pytest
+pre-commit==4.6.2
+    # via -r requirements-dev.in
 psycopg2-binary==2.9.13
     # via -r requirements.in
 pygments==2.21.0
@@ -63,10 +79,16 @@ pytest==8.4.2
     #   pytest-django
 pytest-django==4.14.0
     # via -r requirements-dev.in
+python-discovery==1.6.1
+    # via virtualenv
 python-dotenv==1.2.3
     # via -r requirements.in
+pyyaml==6.0.3
+    # via pre-commit
 requests==2.34.2
     # via dj3-cloudinary-storage
+ruff==0.16.9
+    # via -r requirements-dev.in
 six==1.17.0
     # via cloudinary
 sqlparse==0.6.0
@@ -75,5 +97,7 @@ urllib3==2.8.0
     # via
     #   cloudinary
     #   requests
+virtualenv==21.13.0
+    # via pre-commit
 whitenoise==6.12.0
     # via -r requirements.in

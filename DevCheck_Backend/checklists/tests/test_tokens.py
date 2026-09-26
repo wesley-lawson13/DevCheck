@@ -8,7 +8,9 @@ BLACKLIST = "/checklists/token/blacklist/"
 
 @pytest.fixture
 def tokens(user):
-    res = APIClient().post(TOKEN, {"username": "alice", "password": "s3cure-pass-123"}, format="json")
+    res = APIClient().post(
+        TOKEN, {"username": "alice", "password": "s3cure-pass-123"}, format="json"
+    )
     assert res.status_code == 200, res.data
     return res.data
 
@@ -28,7 +30,9 @@ def test_refresh_rotates_and_invalidates_the_old_token(tokens):
     # the old refresh token was blacklisted on rotation
     assert client.post(REFRESH, {"refresh": tokens["refresh"]}, format="json").status_code == 401
     # the new one still works
-    assert client.post(REFRESH, {"refresh": first.data["refresh"]}, format="json").status_code == 200
+    assert (
+        client.post(REFRESH, {"refresh": first.data["refresh"]}, format="json").status_code == 200
+    )
 
 
 def test_blacklist_rejects_garbage_token(user):

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Project, Page, ChecklistSection, Task, Issue
+
+from .models import ChecklistSection, Issue, Page, Project, Task
 
 # Register your models here.
 admin.site.register(Project)

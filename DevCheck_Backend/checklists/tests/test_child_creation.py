@@ -1,5 +1,3 @@
-import pytest
-
 from checklists.models import ChecklistSection, Page, Task
 
 
@@ -60,11 +58,15 @@ def test_new_section_title_is_created(api_client, user, project_tree):
 
 def test_renaming_section_to_existing_title_is_400(api_client, user, project_tree):
     _, _, sections, _ = project_tree(user)
-    res = api_client.patch(f"/checklists/sections/{sections['DEV'].id}/", {"title": "MVP"}, format="json")
+    res = api_client.patch(
+        f"/checklists/sections/{sections['DEV'].id}/", {"title": "MVP"}, format="json"
+    )
     assert res.status_code == 400
 
 
 def test_patching_section_with_its_own_title_is_ok(api_client, user, project_tree):
     _, _, sections, _ = project_tree(user)
-    res = api_client.patch(f"/checklists/sections/{sections['DEV'].id}/", {"title": "DEV"}, format="json")
+    res = api_client.patch(
+        f"/checklists/sections/{sections['DEV'].id}/", {"title": "DEV"}, format="json"
+    )
     assert res.status_code == 200

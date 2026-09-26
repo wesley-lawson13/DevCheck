@@ -1,11 +1,14 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 
 class Issue(models.Model):
     """An issue form for superusers to check suggestions / live issues in development"""
+
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="complaints")
     description = models.TextField()
     date_submitted = models.DateTimeField(auto_now_add=True)
+
 
 class Project(models.Model):
     """A project groups related website pages together."""
@@ -19,7 +22,7 @@ class Project(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     link = models.URLField(blank=True, null=True)
-    image = models.ImageField(blank=True, null=True, upload_to='projects/')
+    image = models.ImageField(blank=True, null=True, upload_to="projects/")
     project_status = models.CharField(max_length=20, choices=Status.choices, default=Status.MVP)
     created_at = models.DateTimeField(auto_now_add=True)
     last_viewed_at = models.DateTimeField(null=True)
@@ -27,8 +30,10 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+
 class Page(models.Model):
     """Each page belongs to a project and has its own checklists."""
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="pages")
     name = models.CharField(max_length=100)
     order = models.PositiveIntegerField(default=0)
@@ -42,6 +47,7 @@ class Page(models.Model):
 
 class ChecklistSection(models.Model):
     """Sections organize tasks by development stage."""
+
     SECTION_CHOICES = [
         ("MVP", "MVP"),
         ("DEV", "In Development"),
@@ -64,6 +70,7 @@ class ChecklistSection(models.Model):
 
 class Task(models.Model):
     """Individual tasks within a checklist section."""
+
     section = models.ForeignKey(ChecklistSection, on_delete=models.CASCADE, related_name="tasks")
     title = models.CharField(max_length=200)
     completed = models.BooleanField(default=False)

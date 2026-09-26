@@ -44,6 +44,7 @@ def test_create_with_invalid_status_is_400(api_client):
 
 # --- 2.3: list / create / update / delete ---
 
+
 def delete_url(project):
     return f"/checklists/projects/{project.id}/"
 
@@ -65,7 +66,7 @@ def test_list_annotates_task_totals(api_client, user, project_tree):
     from checklists.models import Task
 
     project, _, sections, tasks = project_tree(user)
-    empty_project = Project.objects.create(owner=user, name="empty", description="d")
+    Project.objects.create(owner=user, name="empty", description="d")
     tasks["MVP"].completed = True
     tasks["MVP"].save()
     Task.objects.create(section=sections["DEV"], title="extra", completed=True)
@@ -134,7 +135,11 @@ def test_delete_cascades_to_the_whole_tree(api_client, user, other_user, project
     assert res.status_code == 204
     # only the other user's tree (1 page, 3 sections, 3 tasks) is left
     assert Project.objects.get().name == "Survivor"
-    assert (Page.objects.count(), ChecklistSection.objects.count(), Task.objects.count()) == (1, 3, 3)
+    assert (Page.objects.count(), ChecklistSection.objects.count(), Task.objects.count()) == (
+        1,
+        3,
+        3,
+    )
 
 
 def test_delete_missing_project_is_404(api_client):
