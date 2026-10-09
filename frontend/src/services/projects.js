@@ -36,3 +36,11 @@ export const setTaskCompleted = (taskId, completed) =>
   api.patch(`/checklists/tasks/${taskId}/`, { completed });
 
 export const deleteTask = (taskId) => api.delete(`checklists/tasks/${taskId}/`);
+
+// Drafts pages, tasks and a plan with Claude. Nothing is saved until the project is created.
+export const draftChecklist = ({ name, description, link, pages }) =>
+  api.post("/checklists/ai/draft/", { name, description, link, pages });
+
+// Generates next steps and extension ideas for an existing project (creates no tasks).
+export const generateProjectPlan = (projectId) =>
+  api.post(`/checklists/projects/${projectId}/ai-plan/`);

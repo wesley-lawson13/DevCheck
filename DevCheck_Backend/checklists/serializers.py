@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import ChecklistSection, Issue, Page, Project, Task
@@ -177,7 +179,17 @@ class ProjectDetailSerializer(ProjectImageMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ["id", "name", "description", "link", "pages", "project_status", "image"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "link",
+            "pages",
+            "project_status",
+            "image",
+            "ai_plan",
+        ]
+        read_only_fields = ["ai_plan"]
 
 
 class TreePageSerializer(serializers.Serializer):
@@ -199,18 +211,54 @@ class TreePageSerializer(serializers.Serializer):
         return value
 
 
+class PlanStepSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=200)
+    detail = serializers.CharField(max_length=1000, allow_blank=True)
+    stage = serializers.ChoiceField(choices=list(ChecklistSection.SECTION_ORDER))
+
+
+class PlanSuggestionSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=200)
+    detail = serializers.CharField(max_length=1000, allow_blank=True)
+
+
+class PlanSerializer(serializers.Serializer):
+    """An AI action plan: ordered steps plus optional ideas for extending the project."""
+
+    steps = PlanStepSerializer(many=True, max_length=20)
+    suggestions = PlanSuggestionSerializer(many=True, required=False, default=list, max_length=20)
+
+
+def stamp_plan(plan):
+    """Adds the metadata stored alongside a plan on Project.ai_plan."""
+    return {**plan, "generated_at": timezone.now().isoformat(), "model": settings.ANTHROPIC_MODEL}
+
+
+class ChecklistDraftRequestSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+    description = serializers.CharField(max_length=5000)
+    link = serializers.URLField(required=False, allow_blank=True)
+    pages = serializers.ListField(
+        child=serializers.CharField(max_length=100), required=False, default=list, max_length=10
+    )
+
+
 class ProjectTreeSerializer(serializers.Serializer):
     """Atomically creates one or more pages, each with its 3 sections and starter tasks.
 
-    This is the endpoint the future LLM capture layer (concept -> checklist items) calls.
+    An optional AI `plan` is saved on the project in the same transaction.
     """
 
     pages = TreePageSerializer(many=True, allow_empty=False)
+    plan = PlanSerializer(required=False)
 
     def create(self, validated_data):
         project = self.context["project"]
         pages = []
         with transaction.atomic():
+            if "plan" in validated_data:
+                project.ai_plan = stamp_plan(validated_data["plan"])
+                project.save(update_fields=["ai_plan"])
             for page_data in validated_data["pages"]:
                 page = Page.objects.create(project=project, name=page_data["name"])
                 create_default_sections(page)

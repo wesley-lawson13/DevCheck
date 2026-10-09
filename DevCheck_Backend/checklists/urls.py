@@ -11,6 +11,9 @@ urlpatterns = [
     path(
         "projects/<int:pk>/tree/", views.ProjectTreeCreateView.as_view(), name="project-tree-create"
     ),
+    path("projects/<int:pk>/ai-plan/", views.ProjectAIPlanView.as_view(), name="project-ai-plan"),
+    # AI
+    path("ai/draft/", views.ChecklistDraftView.as_view(), name="ai-draft"),
     # PAGES
     path(
         "projects/<int:project_id>/pages/", views.PageListCreate.as_view(), name="page-list-create"

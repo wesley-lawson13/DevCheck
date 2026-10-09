@@ -7,8 +7,10 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from . import ai
 from .models import ChecklistSection, Issue, Page, Project, Task
 from .serializers import (
+    ChecklistDraftRequestSerializer,
     ChecklistSectionSerializer,
     ChecklistTaskSerializer,
     IssueSerializer,
@@ -17,7 +19,9 @@ from .serializers import (
     ProjectSerializer,
     ProjectTreeSerializer,
     RegisterSerializer,
+    TreePageSerializer,
     UserSerializer,
+    stamp_plan,
 )
 
 
@@ -200,3 +204,53 @@ class CreateIssueView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+def ai_error_response(exc):
+    """Maps AI failures to a `detail` message the frontend already knows how to show."""
+    code = status.HTTP_503_SERVICE_UNAVAILABLE if isinstance(exc, ai.AIUnavailable) else 502
+    return Response({"detail": str(exc)}, status=code)
+
+
+class ChecklistDraftView(generics.GenericAPIView):
+    """Drafts pages, tasks and a plan with Claude. Saves nothing; the client reviews it first."""
+
+    serializer_class = ChecklistDraftRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        try:
+            draft = ai.draft_checklist(
+                data["name"], data["description"], data.get("link"), data["pages"]
+            )
+        except (ai.AIUnavailable, ai.AIGenerationError) as e:
+            return ai_error_response(e)
+
+        # Hold the model's output to the same limits as hand-entered pages and tasks.
+        pages = TreePageSerializer(data=draft["pages"], many=True)
+        pages.is_valid(raise_exception=True)
+        return Response({"pages": draft["pages"], "plan": draft["plan"]})
+
+
+class ProjectAIPlanView(generics.GenericAPIView):
+    """Generates next steps and extension ideas for a project. Never creates tasks."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(owner=self.request.user).prefetch_related(
+            "pages__sections__tasks"
+        )
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_object()
+        try:
+            plan = ai.plan_for_project(project)
+        except (ai.AIUnavailable, ai.AIGenerationError) as e:
+            return ai_error_response(e)
+        project.ai_plan = stamp_plan(plan)
+        project.save(update_fields=["ai_plan"])
+        return Response(project.ai_plan)

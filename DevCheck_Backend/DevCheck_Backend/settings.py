@@ -53,6 +53,9 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "checklists.exceptions.exception_handler",
 }
 
+# Claude model used for AI checklist / plan generation (key comes from ANTHROPIC_API_KEY).
+ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

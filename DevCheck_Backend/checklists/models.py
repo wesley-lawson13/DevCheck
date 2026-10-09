@@ -26,6 +26,8 @@ class Project(models.Model):
     project_status = models.CharField(max_length=20, choices=Status.choices, default=Status.MVP)
     created_at = models.DateTimeField(auto_now_add=True)
     last_viewed_at = models.DateTimeField(null=True)
+    # AI-generated plan: {"steps": [...], "suggestions": [...], "generated_at", "model"}
+    ai_plan = models.JSONField(blank=True, null=True)
 
     def __str__(self):
         return self.name

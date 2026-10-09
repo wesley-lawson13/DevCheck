@@ -1,8 +1,13 @@
 import { useState } from "react";
 import api from "../api";
 import { useNavigate } from "react-router-dom";
+import DraftReview from "../components/DraftReview";
+import { draftChecklist } from "../services/projects";
+import { getErrorMessage } from "../utils/errors";
 
-export default function CreateProject() {
+// mode "ai": Claude drafts the pages, tasks and plan, which the user reviews before creating.
+export default function CreateProject({ mode = "manual" }) {
+  const isAi = mode === "ai";
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -15,6 +20,9 @@ export default function CreateProject() {
   const [pages, setPages] = useState([]);
   const [newPageName, setNewPageName] = useState("");
   const [errors, setErrors] = useState({});
+  const [draft, setDraft] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -65,9 +73,36 @@ export default function CreateProject() {
     setPages((prev) => prev.filter((page) => page.id !== pageId));
   };
 
+  const handleGenerate = async () => {
+    if (!formData.title.trim() || !formData.description.trim()) {
+      setAiError("Enter a project title and description first.");
+      return;
+    }
+    setAiError("");
+    setGenerating(true);
+    try {
+      const res = await draftChecklist({
+        name: formData.title,
+        description: formData.description,
+        link: formData.url || undefined,
+        pages: pages.map((page) => page.name),
+      });
+      setDraft(res.data);
+    } catch (err) {
+      setAiError(getErrorMessage(err, "Failed to generate a checklist."));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+
+    if (isAi && !draft?.pages.length) {
+      setAiError("Generate a checklist first, then create the project.");
+      return;
+    }
 
     try {
       const formDataToSend = new FormData();
@@ -81,7 +116,24 @@ export default function CreateProject() {
 
       const projectId = res.data.id;
 
-      if ((res.status === 200 || res.status === 201) && pages.length > 0) {
+      if ((res.status === 200 || res.status === 201) && isAi) {
+        // Pages, tasks and the plan are saved together by the backend.
+        await api.post(`checklists/projects/${projectId}/tree/`, {
+          pages: draft.pages.map(({ name, tasks }) => ({
+            name,
+            tasks: Object.fromEntries(
+              Object.entries(tasks).map(([code, titles]) => [
+                code,
+                titles.filter((title) => title.trim()),
+              ]),
+            ),
+          })),
+          plan: draft.plan,
+        });
+      } else if (
+        (res.status === 200 || res.status === 201) &&
+        pages.length > 0
+      ) {
         // Backend creates every page, its sections and its tasks atomically.
         await api.post(`checklists/projects/${projectId}/tree/`, {
           pages: pages.map((page) => ({ name: page.name })),
@@ -106,7 +158,9 @@ export default function CreateProject() {
             Create New Project
           </h1>
           <p className="text-dark mb-8">
-            Fill in the project details and add pages to create your project!
+            {isAi
+              ? "Describe your project and Claude will draft the checklist and a plan of attack."
+              : "Fill in the project details and add pages to create your project!"}
           </p>
 
           <div className="space-y-6">
@@ -263,7 +317,9 @@ export default function CreateProject() {
             {/* Add Pages Section */}
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-dark text-2xl font-bold">Add Pages:</h2>
+                <h2 className="text-dark text-2xl font-bold">
+                  {isAi ? "Page hints (optional):" : "Add Pages:"}
+                </h2>
                 <button
                   type="button"
                   className="px-3 py-2 bg-blue text-white shadow-lg rounded-xl font-bold text-md hover:bg-blue/80"
@@ -272,6 +328,13 @@ export default function CreateProject() {
                   + Add
                 </button>
               </div>
+
+              {isAi && (
+                <p className="text-dark/70 text-sm mb-4">
+                  Leave empty to let AI suggest the pages, or add the ones you
+                  want filled in.
+                </p>
+              )}
 
               {/* Add Page Form */}
               {showAddPageForm && (
@@ -348,6 +411,39 @@ export default function CreateProject() {
               )}
             </div>
 
+            {isAi && (
+              <div className="space-y-4">
+                <hr className="text-dark/20" />
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-dark text-2xl font-bold">AI Draft</h2>
+                  <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="px-4 py-2 bg-blue text-white rounded-lg font-bold hover:bg-blue/80 transition-colors disabled:opacity-60"
+                  >
+                    {generating
+                      ? "Generating..."
+                      : draft
+                        ? "Regenerate"
+                        : "Generate checklist"}
+                  </button>
+                </div>
+                {generating && (
+                  <p className="text-dark/70 text-sm italic">
+                    Claude is drafting your checklist. This can take up to a
+                    minute.
+                  </p>
+                )}
+                {aiError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-600 text-sm">{aiError}</p>
+                  </div>
+                )}
+                {draft && <DraftReview draft={draft} onChange={setDraft} />}
+              </div>
+            )}
+
             {/* General Error Display */}
             {errors.non_field_errors && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -377,6 +473,8 @@ export default function CreateProject() {
                   });
                   setThumbnailPreview(null);
                   setPages([]);
+                  setDraft(null);
+                  setAiError("");
                   setShowAddPageForm(false);
                   setNewPageName("");
                   setErrors({});

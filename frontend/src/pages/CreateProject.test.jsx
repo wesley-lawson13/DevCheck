@@ -7,11 +7,11 @@ import CreateProject from "./CreateProject";
 import api from "../api";
 import { API, server } from "../test/server";
 
-function renderCreate() {
+function renderCreate(mode) {
   return render(
     <MemoryRouter initialEntries={["/create-project"]}>
       <Routes>
-        <Route path="/create-project" element={<CreateProject />} />
+        <Route path="/create-project" element={<CreateProject mode={mode} />} />
         <Route
           path="/projects/:projectId"
           element={<div>Created project page</div>}
@@ -172,5 +172,143 @@ describe("CreateProject", () => {
     await waitFor(() => expect(calls).toHaveLength(2));
     expect(calls[0]).toBe("project");
     expect(calls[1]).toEqual(["tree", { pages: [{ name: "Landing" }] }]);
+  });
+
+  describe("build with AI", () => {
+    const DRAFT = {
+      pages: [
+        {
+          name: "Login",
+          tasks: {
+            MVP: ["Add form", "Hash passwords"],
+            DEV: [],
+            DEPLOY: ["Set secret key"],
+          },
+        },
+      ],
+      plan: {
+        steps: [
+          { title: "Scaffold app", detail: "Start with auth.", stage: "MVP" },
+        ],
+        suggestions: [],
+      },
+    };
+    const draftUrl = `${API}/checklists/ai/draft/`;
+
+    test("generates a draft, lets you trim it, and saves pages, tasks and plan together", async () => {
+      const user = userEvent.setup();
+      const calls = [];
+      server.use(
+        http.post(draftUrl, async ({ request }) => {
+          calls.push(["draft", await request.json()]);
+          return HttpResponse.json(DRAFT);
+        }),
+        http.post(`${API}/checklists/projects/`, () => {
+          calls.push("project");
+          return HttpResponse.json({ id: 7 }, { status: 201 });
+        }),
+        http.post(`${API}/checklists/projects/7/tree/`, async ({ request }) => {
+          calls.push(["tree", await request.json()]);
+          return HttpResponse.json([], { status: 201 });
+        }),
+      );
+      renderCreate("ai");
+      await fillRequiredFields(user);
+
+      await user.click(
+        screen.getByRole("button", { name: "Generate checklist" }),
+      );
+      expect(await screen.findByText("Login")).toBeInTheDocument();
+      expect(screen.getByText("Scaffold app")).toBeInTheDocument();
+      expect(calls[0]).toEqual([
+        "draft",
+        { name: "My App", description: "Does things", pages: [] },
+      ]);
+
+      await user.click(
+        screen.getByRole("button", { name: "Remove task Hash passwords" }),
+      );
+      expect(screen.queryByText("Hash passwords")).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Create Project" }));
+
+      await screen.findByText("Created project page");
+      expect(calls[1]).toBe("project");
+      expect(calls[2]).toEqual([
+        "tree",
+        {
+          pages: [
+            {
+              name: "Login",
+              tasks: {
+                MVP: ["Add form"],
+                DEV: [],
+                DEPLOY: ["Set secret key"],
+              },
+            },
+          ],
+          plan: DRAFT.plan,
+        },
+      ]);
+    });
+
+    test("page names typed beforehand are sent as hints", async () => {
+      const user = userEvent.setup();
+      let body;
+      server.use(
+        http.post(draftUrl, async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json(DRAFT);
+        }),
+      );
+      renderCreate("ai");
+      await fillRequiredFields(user);
+      await user.click(screen.getByRole("button", { name: "+ Add" }));
+      await user.type(screen.getByPlaceholderText("Enter page name"), "Login");
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      await user.click(
+        screen.getByRole("button", { name: "Generate checklist" }),
+      );
+
+      await screen.findByText("Scaffold app");
+      expect(body.pages).toEqual(["Login"]);
+    });
+
+    test("shows the server's message when generation fails", async () => {
+      const user = userEvent.setup();
+      server.use(
+        http.post(draftUrl, () =>
+          HttpResponse.json(
+            {
+              detail: "AI generation is not configured. Set ANTHROPIC_API_KEY.",
+            },
+            { status: 503 },
+          ),
+        ),
+      );
+      renderCreate("ai");
+      await fillRequiredFields(user);
+
+      await user.click(
+        screen.getByRole("button", { name: "Generate checklist" }),
+      );
+
+      expect(await screen.findByText(/ANTHROPIC_API_KEY/)).toBeInTheDocument();
+    });
+
+    test("creating without a draft makes no request", async () => {
+      const user = userEvent.setup();
+      const post = vi.spyOn(api, "post");
+      post.mockClear(); // spies from earlier tests are never restored
+      renderCreate("ai");
+      await fillRequiredFields(user);
+
+      await user.click(screen.getByRole("button", { name: "Create Project" }));
+
+      expect(
+        await screen.findByText(/Generate a checklist first/),
+      ).toBeInTheDocument();
+      expect(post).not.toHaveBeenCalled();
+    });
   });
 });

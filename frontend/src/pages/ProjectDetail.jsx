@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FaRegTrashCan } from "react-icons/fa6";
 import ConfirmModal from "../components/ConfirmModal";
 import SectionColumn from "../components/SectionColumn";
+import AIPlanCard from "../components/AIPlanCard";
 import * as projectsApi from "../services/projects";
 import {
   SECTION_COLUMNS,
@@ -21,6 +22,8 @@ export default function ProjectDetail() {
   const [addingTask, setAddingTask] = useState({}); // Track which section is adding a task
   const [newTaskTitle, setNewTaskTitle] = useState({}); // Track new task input values
   const [projectStatus, setProjectStatus] = useState(null);
+  const [aiPlan, setAiPlan] = useState(null);
+  const [generatingPlan, setGeneratingPlan] = useState(false);
   const [creatingNewPage, setCreatingNewPage] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -38,6 +41,7 @@ export default function ProjectDetail() {
       setProject(res.data);
       setPages(res.data.pages);
       setProjectStatus(res.data.project_status);
+      setAiPlan(res.data.ai_plan);
     } catch (err) {
       setErrorMessage(getErrorMessage(err, "Failed to fetch project details."));
     }
@@ -194,6 +198,18 @@ export default function ProjectDetail() {
     setNewPageTitle("");
   };
 
+  const generatePlan = async () => {
+    setGeneratingPlan(true);
+    try {
+      const res = await projectsApi.generateProjectPlan(projectId);
+      setAiPlan(res.data);
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err, "Failed to generate a plan."));
+    } finally {
+      setGeneratingPlan(false);
+    }
+  };
+
   const updateStatus = async (newStatus) => {
     try {
       const res = await projectsApi.updateProjectStatus(projectId, newStatus);
@@ -303,6 +319,12 @@ export default function ProjectDetail() {
             </div>
           </div>
         </div>
+
+        <AIPlanCard
+          plan={aiPlan}
+          generating={generatingPlan}
+          onGenerate={generatePlan}
+        />
 
         {pages.length == 0 && !creatingNewPage && (
           <i className="flex text-dark font-semibold justify-center mb-10">

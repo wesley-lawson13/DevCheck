@@ -304,4 +304,64 @@ describe("ProjectDetail", () => {
     expect(await screen.findByText("About")).toBeInTheDocument();
     expect(postBody).toEqual({ name: "About" });
   });
+
+  describe("AI plan", () => {
+    const PLAN = {
+      steps: [
+        { title: "Write the API", detail: "Start with models.", stage: "MVP" },
+      ],
+      suggestions: [{ title: "Add teams", detail: "Share projects." }],
+    };
+    const planUrl = `${API}/checklists/projects/1/ai-plan/`;
+
+    test("shows the saved plan above the checklist", async () => {
+      tree.ai_plan = PLAN;
+      renderDetail();
+
+      expect(await screen.findByText("Write the API")).toBeInTheDocument();
+      expect(screen.getByText("Add teams")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Regenerate plan" }),
+      ).toBeInTheDocument();
+    });
+
+    test("generating a plan shows it and leaves the checklist untouched", async () => {
+      const user = userEvent.setup();
+      server.use(http.post(planUrl, () => HttpResponse.json(PLAN)));
+      renderDetail();
+      await screen.findByText("Write tests");
+
+      await user.click(screen.getByRole("button", { name: "Generate plan" }));
+
+      expect(await screen.findByText("Write the API")).toBeInTheDocument();
+      expect(screen.getByText("Add teams")).toBeInTheDocument();
+      expect(screen.getAllByRole("checkbox")).toHaveLength(1);
+      expect(detailGets).toBe(1);
+    });
+
+    test("a failed generation shows the server's message", async () => {
+      const user = userEvent.setup();
+      server.use(
+        http.post(planUrl, () =>
+          HttpResponse.json(
+            { detail: "The AI service failed. Try again in a moment." },
+            { status: 502 },
+          ),
+        ),
+      );
+      renderDetail();
+      await screen.findByText("Write tests");
+
+      await user.click(screen.getByRole("button", { name: "Generate plan" }));
+
+      expect(
+        await screen.findByText(
+          "The AI service failed. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Generate plan" }),
+      ).toBeEnabled();
+    });
+  });
 });

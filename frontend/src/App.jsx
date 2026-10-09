@@ -8,6 +8,7 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import CreateProject from "./pages/CreateProject.jsx";
+import CreateProjectChooser from "./pages/CreateProjectChooser.jsx";
 import Landing from "./pages/Landing.jsx";
 import EditProject from "./pages/EditProject.jsx";
 
@@ -51,7 +52,23 @@ function App() {
             path="/create-project"
             element={
               <ProtectedRoute>
+                <CreateProjectChooser />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-project/manual"
+            element={
+              <ProtectedRoute>
                 <CreateProject />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-project/ai"
+            element={
+              <ProtectedRoute>
+                <CreateProject mode="ai" />
               </ProtectedRoute>
             }
           />

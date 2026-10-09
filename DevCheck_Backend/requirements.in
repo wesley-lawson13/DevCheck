@@ -1,4 +1,5 @@
 Django>=5.2,<5.3
+anthropic
 djangorestframework
 djangorestframework_simplejwt
 django-cors-headers
