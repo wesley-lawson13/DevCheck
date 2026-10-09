@@ -339,6 +339,102 @@ describe("ProjectDetail", () => {
       expect(detailGets).toBe(1);
     });
 
+    test("collapsing hides the plan, and expanding brings it back", async () => {
+      const user = userEvent.setup();
+      tree.ai_plan = PLAN;
+      renderDetail();
+      await screen.findByText("Write the API");
+
+      await user.click(
+        screen.getByRole("button", { name: "Collapse AI plan" }),
+      );
+
+      expect(screen.queryByText("Write the API")).not.toBeInTheDocument();
+      expect(screen.queryByText("Add teams")).not.toBeInTheDocument();
+      expect(screen.getByText("1 step")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "AI Plan" })).toBeVisible();
+
+      await user.click(screen.getByRole("button", { name: "Expand AI plan" }));
+      expect(screen.getByText("Write the API")).toBeInTheDocument();
+    });
+
+    test("generating while collapsed expands the card", async () => {
+      const user = userEvent.setup();
+      tree.ai_plan = PLAN;
+      server.use(
+        http.post(planUrl, () =>
+          HttpResponse.json({
+            ...PLAN,
+            steps: [{ ...PLAN.steps[0], title: "Brand new step" }],
+          }),
+        ),
+      );
+      renderDetail();
+      await screen.findByText("Write the API");
+      await user.click(
+        screen.getByRole("button", { name: "Collapse AI plan" }),
+      );
+
+      await user.click(screen.getByRole("button", { name: "Regenerate plan" }));
+
+      expect(await screen.findByText("Brand new step")).toBeInTheDocument();
+    });
+
+    test("deleting asks for confirmation, then removes the plan but not the checklist", async () => {
+      const user = userEvent.setup();
+      tree.ai_plan = PLAN;
+      let deleted = false;
+      server.use(
+        http.delete(planUrl, () => {
+          deleted = true;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      renderDetail();
+      await screen.findByText("Write the API");
+
+      await user.click(screen.getByRole("button", { name: "Delete AI plan" }));
+      expect(deleted).toBe(false); // nothing happens until confirmed
+      await user.click(screen.getByRole("button", { name: "Delete" }));
+
+      await waitFor(() => expect(deleted).toBe(true));
+      expect(screen.queryByText("Write the API")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Generate plan" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Write tests")).toBeInTheDocument();
+    });
+
+    test("cancelling the delete keeps the plan", async () => {
+      const user = userEvent.setup();
+      tree.ai_plan = PLAN;
+      renderDetail();
+      await screen.findByText("Write the API");
+
+      await user.click(screen.getByRole("button", { name: "Delete AI plan" }));
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(screen.getByText("Write the API")).toBeInTheDocument();
+    });
+
+    test("a failed delete keeps the plan and shows the error", async () => {
+      const user = userEvent.setup();
+      tree.ai_plan = PLAN;
+      server.use(
+        http.delete(planUrl, () =>
+          HttpResponse.json({ detail: "Not found." }, { status: 404 }),
+        ),
+      );
+      renderDetail();
+      await screen.findByText("Write the API");
+
+      await user.click(screen.getByRole("button", { name: "Delete AI plan" }));
+      await user.click(screen.getByRole("button", { name: "Delete" }));
+
+      expect(await screen.findByText("Not found.")).toBeInTheDocument();
+      expect(screen.getByText("Write the API")).toBeInTheDocument();
+    });
+
     test("a failed generation shows the server's message", async () => {
       const user = userEvent.setup();
       server.use(

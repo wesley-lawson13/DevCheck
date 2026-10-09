@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { FaChevronDown, FaChevronRight, FaRegTrashCan } from "react-icons/fa6";
 import { STATUS_BG, STATUS_LABELS } from "../constants";
 
 // Ordered plan of attack. Shared by the project page and the create-with-AI review.
@@ -36,32 +38,72 @@ export function PlanStepList({ steps, onRemove }) {
   );
 }
 
-export default function AIPlanCard({ plan, generating, onGenerate }) {
+export default function AIPlanCard({ plan, generating, onGenerate, onDelete }) {
+  const [collapsed, setCollapsed] = useState(false);
   const hasPlan = Boolean(plan?.steps?.length);
   const suggestions = plan?.suggestions ?? [];
+
+  // A new plan should be visible, so generating always expands the card.
+  const handleGenerate = () => {
+    setCollapsed(false);
+    onGenerate();
+  };
 
   return (
     <section
       aria-label="AI Plan"
       className="mx-auto mb-10 max-w-5xl rounded-2xl bg-white p-6 shadow"
     >
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-dark">AI Plan</h2>
+      <div
+        className={`flex items-center justify-between gap-4 ${collapsed ? "" : "mb-4"}`}
+      >
         <button
           type="button"
-          onClick={onGenerate}
-          disabled={generating}
-          className="rounded-lg bg-khaki px-4 py-2 font-semibold text-white transition hover:bg-khaki/80 disabled:opacity-60"
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Expand AI plan" : "Collapse AI plan"}
+          onClick={() => setCollapsed((value) => !value)}
+          className="flex items-center gap-3 text-left"
         >
-          {generating
-            ? "Generating..."
-            : hasPlan
-              ? "Regenerate plan"
-              : "Generate plan"}
+          {collapsed ? (
+            <FaChevronRight className="text-dark" />
+          ) : (
+            <FaChevronDown className="text-dark" />
+          )}
+          <h2 className="text-2xl font-semibold text-dark">AI Plan</h2>
+          {collapsed && hasPlan && (
+            <span className="text-sm text-dark/70">
+              {plan.steps.length} {plan.steps.length === 1 ? "step" : "steps"}
+            </span>
+          )}
         </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="rounded-lg bg-khaki px-4 py-2 font-semibold text-white transition hover:bg-khaki/80 disabled:opacity-60"
+          >
+            {generating
+              ? "Generating..."
+              : hasPlan
+                ? "Regenerate plan"
+                : "Generate plan"}
+          </button>
+          {hasPlan && (
+            <button
+              type="button"
+              aria-label="Delete AI plan"
+              onClick={onDelete}
+              disabled={generating}
+              className="text-dark disabled:opacity-60"
+            >
+              <FaRegTrashCan size={22} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {!hasPlan && (
+      {!collapsed && !hasPlan && (
         <p className="text-sm italic text-dark/70">
           {generating
             ? "Claude is reading your checklist. This can take up to a minute."
@@ -69,9 +111,9 @@ export default function AIPlanCard({ plan, generating, onGenerate }) {
         </p>
       )}
 
-      {hasPlan && <PlanStepList steps={plan.steps} />}
+      {!collapsed && hasPlan && <PlanStepList steps={plan.steps} />}
 
-      {suggestions.length > 0 && (
+      {!collapsed && suggestions.length > 0 && (
         <div className="mt-6 border-t border-dark/10 pt-4">
           <h3 className="mb-2 text-lg font-semibold text-dark">
             Ideas to extend

@@ -24,6 +24,7 @@ export default function ProjectDetail() {
   const [projectStatus, setProjectStatus] = useState(null);
   const [aiPlan, setAiPlan] = useState(null);
   const [generatingPlan, setGeneratingPlan] = useState(false);
+  const [showDeletePlanModal, setShowDeletePlanModal] = useState(false);
   const [creatingNewPage, setCreatingNewPage] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -210,6 +211,17 @@ export default function ProjectDetail() {
     }
   };
 
+  const deletePlan = async () => {
+    setShowDeletePlanModal(false);
+    try {
+      await projectsApi.deleteProjectPlan(projectId);
+      setAiPlan(null);
+      setSuccessMessage("AI plan deleted.");
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err, "Failed to delete the plan."));
+    }
+  };
+
   const updateStatus = async (newStatus) => {
     try {
       const res = await projectsApi.updateProjectStatus(projectId, newStatus);
@@ -266,7 +278,7 @@ export default function ProjectDetail() {
 
       <div
         className={`min-h-screen p-4 transition-all duration-200 ${
-          showDeleteModal || showUpdateStatusModal
+          showDeleteModal || showUpdateStatusModal || showDeletePlanModal
             ? "blur-sm pointer-events-none"
             : ""
         }`}
@@ -324,6 +336,7 @@ export default function ProjectDetail() {
           plan={aiPlan}
           generating={generatingPlan}
           onGenerate={generatePlan}
+          onDelete={() => setShowDeletePlanModal(true)}
         />
 
         {pages.length == 0 && !creatingNewPage && (
@@ -429,6 +442,16 @@ export default function ProjectDetail() {
             setPageToDelete(null);
           }}
           onConfirm={async () => deletePage(pageToDelete)}
+        />
+      )}
+
+      {/* Delete Plan Modal */}
+      {showDeletePlanModal && (
+        <ConfirmModal
+          title="Delete AI Plan?"
+          message="This removes the plan and its ideas. Your checklist is not changed."
+          onCancel={() => setShowDeletePlanModal(false)}
+          onConfirm={deletePlan}
         />
       )}
 

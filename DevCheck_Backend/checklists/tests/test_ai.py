@@ -125,6 +125,26 @@ def test_plan_unavailable_returns_503_and_keeps_the_old_plan(api_client, project
     assert project.ai_plan == {"steps": [], "suggestions": []}
 
 
+def test_delete_plan_clears_it_and_keeps_tasks(api_client, project_tree, user):
+    project, *_ = project_tree(user)
+    project.ai_plan = PLAN
+    project.save()
+    before = Task.objects.count()
+
+    assert api_client.delete(plan_url(project)).status_code == 204
+
+    project.refresh_from_db()
+    assert project.ai_plan is None
+    assert Task.objects.count() == before
+
+
+def test_delete_plan_for_another_users_project_is_404(api_client, other_user):
+    theirs = Project.objects.create(owner=other_user, name="Theirs", description="d", ai_plan=PLAN)
+    assert api_client.delete(plan_url(theirs)).status_code == 404
+    theirs.refresh_from_db()
+    assert theirs.ai_plan == PLAN
+
+
 def test_detail_includes_ai_plan(api_client, project):
     url = f"/checklists/projects/{project.id}/detail/"
     assert api_client.get(url).data["ai_plan"] is None

@@ -236,7 +236,7 @@ class ChecklistDraftView(generics.GenericAPIView):
 
 
 class ProjectAIPlanView(generics.GenericAPIView):
-    """Generates next steps and extension ideas for a project. Never creates tasks."""
+    """Generates (POST) or removes (DELETE) a project's AI plan. Never touches tasks."""
 
     permission_classes = [IsAuthenticated]
 
@@ -254,3 +254,9 @@ class ProjectAIPlanView(generics.GenericAPIView):
         project.ai_plan = stamp_plan(plan)
         project.save(update_fields=["ai_plan"])
         return Response(project.ai_plan)
+
+    def delete(self, request, *args, **kwargs):
+        project = self.get_object()
+        project.ai_plan = None
+        project.save(update_fields=["ai_plan"])
+        return Response(status=status.HTTP_204_NO_CONTENT)

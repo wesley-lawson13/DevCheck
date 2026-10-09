@@ -44,3 +44,6 @@ export const draftChecklist = ({ name, description, link, pages }) =>
 // Generates next steps and extension ideas for an existing project (creates no tasks).
 export const generateProjectPlan = (projectId) =>
   api.post(`/checklists/projects/${projectId}/ai-plan/`);
+
+export const deleteProjectPlan = (projectId) =>
+  api.delete(`/checklists/projects/${projectId}/ai-plan/`);
