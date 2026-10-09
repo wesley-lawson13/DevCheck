@@ -13,7 +13,10 @@ export default function ProjectCard({ project }) {
       </div>
       <div className="mx-2 text-center text-xl">
         <h5 className="text-dark font-bold mb-2">{project.name}</h5>
-        <p className="text-dark font-light text-sm mb-3">
+        <p
+          title={project.description}
+          className="text-dark font-light text-sm mb-3 line-clamp-3 break-words"
+        >
           {project.description}
         </p>
       </div>

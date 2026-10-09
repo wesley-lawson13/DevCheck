@@ -290,9 +290,12 @@ export default function ProjectDetail() {
           </h1>
 
           {project.description !== null && (
-            <div className="flex justify-start items-center mb-2 gap-2">
+            <div className="mb-4">
               <h4 className="text-lg font-bold text-dark">Description:</h4>
-              <span className="text-md font-light">{project.description}</span>
+              {/* Keeps the author's line breaks, wraps long words, scrolls past ~10 lines. */}
+              <p className="text-md font-light whitespace-pre-wrap break-words max-h-60 overflow-y-auto pr-2">
+                {project.description}
+              </p>
             </div>
           )}
 
