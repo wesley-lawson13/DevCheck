@@ -197,7 +197,9 @@ describe("CreateProject", () => {
 
     test("manual mode has no project brief box", () => {
       renderCreate("manual");
-      expect(screen.queryByLabelText(/Project Context/)).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText(/Project Context/),
+      ).not.toBeInTheDocument();
     });
 
     test("generates a draft, lets you trim it, and saves pages, tasks and plan together", async () => {

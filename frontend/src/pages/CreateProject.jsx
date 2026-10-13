@@ -357,7 +357,8 @@ export default function CreateProject({ mode = "manual" }) {
                     budget, existing code to build on.
                   </li>
                   <li>
-                    <strong>Future Plans</strong>: what's currently out of scope, but could be a future feature.
+                    <strong>Future Plans</strong>: what's currently out of
+                    scope, but could be a future feature.
                   </li>
                 </ul>
                 <textarea
