@@ -195,6 +195,11 @@ describe("CreateProject", () => {
     };
     const draftUrl = `${API}/checklists/ai/draft/`;
 
+    test("manual mode has no project brief box", () => {
+      renderCreate("manual");
+      expect(screen.queryByLabelText(/Project Context/)).not.toBeInTheDocument();
+    });
+
     test("generates a draft, lets you trim it, and saves pages, tasks and plan together", async () => {
       const user = userEvent.setup();
       const calls = [];
@@ -249,6 +254,29 @@ describe("CreateProject", () => {
           plan: DRAFT.plan,
         },
       ]);
+    });
+
+    test("the project brief is sent with the draft request", async () => {
+      const user = userEvent.setup();
+      let body;
+      server.use(
+        http.post(draftUrl, async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json(DRAFT);
+        }),
+      );
+      renderCreate("ai");
+      await fillRequiredFields(user);
+      await user.type(
+        screen.getByLabelText(/Project Context/),
+        "Use Django, avoid Redux",
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Generate checklist" }),
+      );
+
+      await screen.findByText("Scaffold app");
+      expect(body.context).toBe("Use Django, avoid Redux");
     });
 
     test("page names typed beforehand are sent as hints", async () => {

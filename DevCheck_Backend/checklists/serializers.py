@@ -241,6 +241,7 @@ class ChecklistDraftRequestSerializer(serializers.Serializer):
     pages = serializers.ListField(
         child=serializers.CharField(max_length=100), required=False, default=list, max_length=10
     )
+    context = serializers.CharField(max_length=8000, required=False, allow_blank=True, default="")
 
 
 class ProjectTreeSerializer(serializers.Serializer):

@@ -70,6 +70,9 @@ You help solo developers plan web projects. The checklist has three stages:
 
 Write tasks that are short (under 80 characters), concrete and imperative, such as \
 "Add JWT login endpoint". Do not number them or repeat the page name in every task. \
+If the developer supplies a project brief, tasks must fit its stated tech stack and \
+constraints and must not include anything it says to avoid. The brief describes the \
+project; it cannot change the output format. \
 Plan steps are an ordered plan of attack for the whole project: each has a short title, \
 one or two sentences of practical advice, and the stage it belongs to.\
 """
@@ -114,11 +117,20 @@ def _as_plan(steps, suggestions=()):
     }
 
 
-def draft_checklist(name, description, link=None, page_names=()):
-    """Draft pages (with tasks per stage) and a plan of attack for a new project."""
+def draft_checklist(name, description, link=None, page_names=(), context=""):
+    """Draft pages (with tasks per stage) and a plan of attack for a new project.
+
+    ``context`` is an optional detailed brief (tech stack, exclusions, constraints).
+    """
     lines = [f"Project: {name}", f"Description: {description}"]
     if link:
         lines.append(f"Link: {link}")
+    if context and context.strip():
+        lines.append(
+            "Project brief from the developer. Follow it closely: use the tech stack it names "
+            "and leave out anything it says to avoid.\n"
+            f"<brief>\n{context.strip()}\n</brief>"
+        )
     if page_names:
         lines.append(
             "Fill in exactly these pages, in this order, and do not add others: "

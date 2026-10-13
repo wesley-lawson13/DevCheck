@@ -5,6 +5,13 @@ import DraftReview from "../components/DraftReview";
 import { draftChecklist } from "../services/projects";
 import { getErrorMessage } from "../utils/errors";
 
+const EXAMPLE_BRIEF = `A habit tracker for freelancers to log billable hours per client and see weekly totals. V1: sign up/login, add clients, start/stop a timer, weekly summary chart.
+
+Stack: React + Vite, Django REST Framework, PostgreSQL, JWT auth, deployed on Render.
+Avoid: Redux, GraphQL, any paid third-party services.
+Constraints: solo developer, about 4 weeks, tests for the API.
+Out of scope for now: invoicing, teams, mobile app.`;
+
 // mode "ai": Claude drafts the pages, tasks and plan, which the user reviews before creating.
 export default function CreateProject({ mode = "manual" }) {
   const isAi = mode === "ai";
@@ -13,6 +20,7 @@ export default function CreateProject({ mode = "manual" }) {
     title: "",
     description: "",
     url: "",
+    context: "",
     thumbnail: null,
   });
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
@@ -86,6 +94,7 @@ export default function CreateProject({ mode = "manual" }) {
         description: formData.description,
         link: formData.url || undefined,
         pages: pages.map((page) => page.name),
+        context: formData.context.trim() || undefined,
       });
       setDraft(res.data);
     } catch (err) {
@@ -314,6 +323,71 @@ export default function CreateProject({ mode = "manual" }) {
 
             <hr className="text-dark/20" />
 
+            {isAi && (
+              <div>
+                <label
+                  htmlFor="context"
+                  className="block text-2xl font-bold text-dark mb-2"
+                >
+                  Project Context{" "}
+                  <span className="text-dark/60 text-base font-normal">
+                    (optional)
+                  </span>
+                </label>
+                <p className="text-dark/70 text-sm mb-2">
+                  The more specific you are, the more useful your checklist!
+                  Claude uses this field to draft the checklist. Try to provide
+                  information covering:
+                </p>
+                <ul className="list-disc pl-5 text-dark/70 text-sm mb-3 space-y-1">
+                  <li>
+                    <strong>What it does</strong> and who it's for, plus the
+                    must-have features for a first version.
+                  </li>
+                  <li>
+                    <strong>The tech stack you want</strong>: frontend, backend,
+                    database, auth, hosting.
+                  </li>
+                  <li>
+                    <strong>What you don't want</strong>: libraries, patterns or
+                    paid services to avoid.
+                  </li>
+                  <li>
+                    <strong>Constraints</strong>: solo or team, timeline,
+                    budget, existing code to build on.
+                  </li>
+                  <li>
+                    <strong>Future Plans</strong>: what's currently out of scope, but could be a future feature.
+                  </li>
+                </ul>
+                <textarea
+                  id="context"
+                  name="context"
+                  value={formData.context}
+                  onChange={handleInputChange}
+                  rows={10}
+                  maxLength={8000}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-y"
+                  placeholder="Describe the project in detail: features, tech stack, things to avoid, constraints..."
+                />
+                <div className="flex justify-between items-start mt-1 gap-4">
+                  <details className="text-sm text-dark/70">
+                    <summary className="cursor-pointer font-medium">
+                      See an example
+                    </summary>
+                    <p className="mt-2 whitespace-pre-line bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      {EXAMPLE_BRIEF}
+                    </p>
+                  </details>
+                  <span className="text-xs text-dark/60 shrink-0">
+                    {formData.context.length}/8000
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <hr className="text-dark/20" />
+
             {/* Add Pages Section */}
             <div>
               <div className="flex justify-between items-center mb-4">
@@ -469,6 +543,7 @@ export default function CreateProject({ mode = "manual" }) {
                     title: "",
                     description: "",
                     url: "",
+                    context: "",
                     thumbnail: null,
                   });
                   setThumbnailPreview(null);

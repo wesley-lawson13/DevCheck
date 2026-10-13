@@ -48,9 +48,28 @@ def test_draft_returns_pages_and_plan_without_saving(api_client, monkeypatch):
     assert res.status_code == 200, res.data
     assert res.data["pages"][0]["name"] == "Login"
     assert res.data["plan"]["steps"][0]["stage"] == "MVP"
-    assert calls == [("Shop", "A store", None, ["Login"])]
+    assert calls == [("Shop", "A store", None, ["Login"], "")]
     assert Project.objects.count() == 0
     assert Page.objects.count() == 0
+
+
+def test_draft_passes_the_project_brief_through(api_client, monkeypatch):
+    calls = []
+    monkeypatch.setattr(ai, "draft_checklist", lambda *args: calls.append(args) or DRAFT)
+    res = api_client.post(
+        DRAFT_URL,
+        {"name": "Shop", "description": "A store", "context": "Use Django, no Redux"},
+        format="json",
+    )
+    assert res.status_code == 200, res.data
+    assert calls == [("Shop", "A store", None, [], "Use Django, no Redux")]
+
+
+def test_draft_rejects_an_oversized_brief(api_client):
+    res = api_client.post(
+        DRAFT_URL, {"name": "n", "description": "d", "context": "x" * 8001}, format="json"
+    )
+    assert res.status_code == 400
 
 
 def test_draft_requires_a_name(api_client):
@@ -247,6 +266,18 @@ def test_draft_checklist_maps_stages_and_honors_page_hints(monkeypatch):
         {"name": "Login", "tasks": {"MVP": ["a"], "DEV": ["b"], "DEPLOY": ["c"]}}
     ]
     assert result["plan"]["suggestions"] == []
+
+
+def test_draft_checklist_includes_the_brief_in_the_prompt(monkeypatch):
+    parsed = ai.ChecklistDraft(pages=[], steps=[])
+    client = use_client(monkeypatch, FakeClient(parsed))
+
+    ai.draft_checklist("Shop", "A store", context="  Use Django. Avoid Redux.  ")
+    prompt = client.request["messages"][0]["content"]
+    assert "<brief>\nUse Django. Avoid Redux.\n</brief>" in prompt
+
+    ai.draft_checklist("Shop", "A store", context="   ")
+    assert "<brief>" not in client.request["messages"][0]["content"]
 
 
 def test_a_refusal_raises_instead_of_reading_output(monkeypatch):

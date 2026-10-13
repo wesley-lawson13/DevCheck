@@ -224,7 +224,7 @@ class ChecklistDraftView(generics.GenericAPIView):
         data = serializer.validated_data
         try:
             draft = ai.draft_checklist(
-                data["name"], data["description"], data.get("link"), data["pages"]
+                data["name"], data["description"], data.get("link"), data["pages"], data["context"]
             )
         except (ai.AIUnavailable, ai.AIGenerationError) as e:
             return ai_error_response(e)
